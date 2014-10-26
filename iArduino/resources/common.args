@@ -1,0 +1,5 @@
+-Wall
+-fmessage-length=0
+-O0
+-g
+-c

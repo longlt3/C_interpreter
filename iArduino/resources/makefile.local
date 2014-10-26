@@ -1,0 +1,17 @@
+#GNU make install directory path: 
+export GNUMakeInstallDirPath=
+
+#Project directory path: 
+export ProjDirPath=/home/longlt/workspace/cpp/C_interpreter/iArduino
+
+#Make directory path: 
+export MakeDirPath=/home/longlt/workspace/cpp/C_interpreter/iArduino
+
+#Make resources directory path: 
+export MakeResDirPath=./resources
+
+#Make sources directory path: 
+export MakeSrcDirPath=./sources
+
+#Make output directory path: 
+export MakeOutDirPath=./out
