@@ -30,33 +30,30 @@ enum SYMBOL_TYPE
 enum OPERATOR
 {
     OPE_DEFAULT,
-    OPE_OPEN_PAREN,
-    OPE_CLOSE_PAREN,
-
-    OPE_D_EQU,
-    OPE_DIF,
-    OPE_D_OR,
-    OPE_D_AND,
-
-    OPE_LES_TH,
-    OPE_GRE_TH,
-    OPE_LES_EQU,
-    OPE_GRE_EQU,
-
-    OPE_LEF_SH,
-    OPE_RIG_SH,
-    OPE_XOR,
-    OPE_AND,
-    OPE_OR,
-
-    OPE_ADD,
-    OPE_SUB,
-
-    OPE_MUL,
-    OPE_DIV,
-    OPE_MOD,
-
-    OPE_DIF_Z,
+    OPE_OPEN_PAREN,         // (
+    OPE_CLOSE_PAREN,        // )
+    OPE_D_EQU,              // ==
+    OPE_DIF,                // !=
+    OPE_D_OR,               // ||
+    OPE_D_AND,              // &&
+    OPE_LES_TH,             // <
+    OPE_GRE_TH,             // >
+    OPE_LES_EQU,            // <=
+    OPE_GRE_EQU,            // >=
+    OPE_LEF_SH,             // <<
+    OPE_RIG_SH,             // >>
+    OPE_XOR,                // ^
+    OPE_AND,                // &
+    OPE_OR,                 // |
+    OPE_ADD,                // +
+    OPE_SUB,                // -
+    OPE_MUL,                // *
+    OPE_DIV,                // /
+    OPE_MOD,                // %
+    OPE_DIF_Z,              // !
+    OPE_ASSIGN,             // =
+    OPE_D_ADD,              // ++
+    OPE_D_SUB,              // --
 
     OPE_ERR,
 };
@@ -71,6 +68,7 @@ typedef struct _int_stack_t
 
 int_stack_t ope_st;
 int_stack_t val_st;
+int variables[26] = {0};
 
 // int top=-1;
 
@@ -173,7 +171,31 @@ void print_ope(int ope)
     }
 }
 
+void print_stack(int_stack_t *st)
+{
+    int i;
+    for(i=st->top-1; i>=0; i--)
+    {
+        printf("%d ", st->elem[i]);
+    }
+    printf("\n");
+}
+
+void print_ope_stack(int_stack_t *st)
+{
+    int i;
+    for(i=st->top-1; i>=0; i--)
+    {
+        print_ope(st->elem[i]);
+    }
+    printf("\n");
+}
+
 int is_white_space(char ch);
+
+int is_empty(int_stack_t *const st);
+
+int get_size(int_stack_t *const st);
 
 int get_top(int_stack_t *const st);
 
@@ -185,32 +207,51 @@ int prcd(int ope);
 
 int calculate_operator(int l_operant, int r_operant, int ope);
 
+// int assignment_operator(int l_operant, int r_operant, int ope);
+
+int get_primitive_val(char ** sym_s, char const*const sym_e, int *val);
+
 int isoperator(char ** symbol);
 
 int convertip(char infix_s[], char infix_e[], int *const rs);
 
-int check_symbol(char *const sym_s, char *const sym_e);
+int check_symbol(char *const sym_s);
 
 int main()
 {
-
-    char sym_pri[] = "1", *sym_pri_e,
-        sym_func[] = "asd", *sym_func_e,
-        sym_var[] = "a", *sym_var_e
-        ;
-    char expr[] = "0b1011 ^ 0b0100";
+    // char sym_pri[] = "1", *sym_pri_e,
+    //     sym_func[] = "asd", *sym_func_e,
+    //     sym_var[] = "a", *sym_var_e
+    //     ;
+    // char expr[] = "((1+2) * 3 + 4 * (5+6)) * 7";
+    char expr[] = "1 + 0()";
     char *expr_e = expr + sizeof(expr);
     int val;
     int rs = convertip(expr, expr_e, &val);
     print_ret_val(rs);
     TRACEINT(val);
-
+    // TRACEINT(1+(2));
+    TRACEINT(ope_st.top);
     return 0;
 }
 
 int is_white_space(char ch)
 {
     return (ch == '\0') || (ch == '\n') || (ch == '\r') || (ch == '\t') || (ch == ' ');
+}
+
+int is_empty(int_stack_t *const st)
+{
+    if(st)
+    {
+        return !st->top;
+    }
+    return -1;
+}
+
+int get_size(int_stack_t *const st)
+{
+    return st->top;
 }
 
 int get_top(int_stack_t *const st)
@@ -349,6 +390,100 @@ int calculate_operator(int l_operant, int r_operant, int ope)
     return 0;
 }
 
+int get_primitive_val(char ** sym_s, char *const sym_e, int *val)
+{
+    char *cp_s;
+    if(!sym_s || !(*sym_s) || !sym_e || !val)
+    {
+        return RETVAL_NULL;
+    }
+    char *const cp_e = sym_e;
+    cp_s = *sym_s;
+    if(*cp_s == '0') // binary or hexadecimal format.
+    {
+        if((*(cp_s+1) != 'x') && (*(cp_s+1) != 'b')) // val is zero.
+        {
+            cp_s++;
+        }
+        else if(*(cp_s+1)=='x') // hexadecimal format
+        {
+            // check syntax
+            if(!(cp_s+1) || !(cp_s+2) || (cp_s+2)>=cp_e)
+            {
+                TRACE();
+                return RETVAL_SYNTAX;
+            }
+            // walk through 'x'
+            cp_s+=2;
+            // if nothing hex's character left after 'x', return error syntax.
+            if(!((cp_s < cp_e) &&
+                (((*cp_s>='0') && (*cp_s<='9')) ||
+                ((*cp_s>='A') && (*cp_s<='F')) ||
+                ((*cp_s>='a') && (*cp_s<='f')))
+                ))
+            {
+                TRACE();
+                return RETVAL_SYNTAX;
+            }
+            while((cp_s < cp_e) &&
+                (((*cp_s>='0') && (*cp_s<='9')) ||
+                ((*cp_s>='A') && (*cp_s<='F')) ||
+                ((*cp_s>='a') && (*cp_s<='f')))
+                )
+            {
+                *val <<= 4;
+                if (*cp_s>='0' && *cp_s<='9')
+                {
+                    *val += (*cp_s - '0');
+                }
+                else if (*cp_s>='a' && *cp_s<='f')
+                {
+                    *val += (*cp_s - 'a' + 0xa);
+                }
+                else if (*cp_s>='A' && *cp_s<='F')
+                {
+                    *val += (*cp_s - 'A' + 0xa);
+                }
+                cp_s++;
+            }
+        }
+        else
+        {
+            // binary format.
+            if(!((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='1')))
+            {
+                TRACE();
+                return RETVAL_SYNTAX;
+            }
+            // check syntax
+            if(!(cp_s+1) || !(cp_s+2) || (cp_s+2)>=cp_e)
+            {
+                TRACE();
+                return RETVAL_SYNTAX;
+            }
+            // walk through b
+            cp_s += 2;
+            while((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='1'))
+            {
+                *val = (*val<<1) + (*cp_s - '0');
+                cp_s++;
+            }
+        }
+    }
+    else // decimal format.
+    {
+        while((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='9'))
+        {
+            *val *= 10;
+            *val += (*cp_s - '0');
+            cp_s++;
+        }
+    }
+    cp_s--;
+    *sym_s = cp_s;
+    return RETVAL_OK;
+}
+
 // int isoperator(char *symbol, int size)
 int isoperator(char ** symbol)
 {
@@ -476,40 +611,50 @@ int isoperator(char ** symbol)
     return ret;
 }
 
-int check_symbol(char *const sym_s, char*const sym_e)
+int check_symbol(char *const sym_s)
 {
-    char *cp_s, *cp_e;
-    if(!sym_s || !sym_e)
+    if(!sym_s)
     {
         return SYM_ERROR;
     }
-    cp_s = sym_s;
-    cp_e = sym_e;
-    if(cp_e == '\0')
-    {
-        cp_e--;
-    }
-    if(*cp_s >= '0' && *cp_s <= '9')
+    if(*sym_s >= '0' && *sym_s <= '9')
     {
         return SYM_PRIMITIVE;
     }
-    else if((*cp_s >= 'a' && *cp_s <= 'z') || (*cp_s >= 'A' && *cp_s <= 'Z'))
+    else if((*sym_s >= 'a' && *sym_s <= 'z') || (*sym_s >= 'A' && *sym_s <= 'Z'))
     {
-        if(cp_s == cp_e)
-        {
+        // if(*(sym_s + 1) == )
+        // int i, open=0;
+        // for(i=1; (sym_s+i != 0) && !is_white_space(*(sym_s+i)); i++)
+        // {
+        //     if(*(sym_s+i) == '(')
+        //     {
+        //         open++;
+        //     }
+        //     if(*(sym_s+i) == ')')
+        //     {
+        //         open--;
+        //     }
+        // }
+        // if(open)
+        // {
+
+        // }
+        // if(sym_s == sym_e)
+        // {
             return SYM_VARIABLE;
-        }
-        else
-        {
-            return SYM_FUNCTION;
-        }
+        // }
+        // else
+        // {
+        //     return SYM_FUNCTION;
+        // }
     }
     return SYM_ERROR;
 }
 
 int convertip(char infix_s[], char infix_e[], int *const rs)
 {
-    int i, j=0;
+    // int i, j=0;
     char *symbol, *sym_s, *sym_e;
     // ope_st[++top]='#';
     memset(&ope_st, 0, sizeof(ope_st));
@@ -517,14 +662,12 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
     push(&ope_st, OPE_DEFAULT);
     int ope = OPE_ERR;
 
-    // int rs = 0;
-
-    int el;
+    int open;
 
     int r_val, l_val, tmp_ope;
     char *cp_s,*cp_e;
     int val;
-
+    open = 0;
     sym_s = infix_s;
     sym_e = infix_e;
     for(symbol=sym_s; symbol<sym_e;symbol++)
@@ -535,7 +678,9 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
         }
         ope = isoperator(&symbol);
 
-        // TRACESTR(symbol);
+        TRACESTR(symbol);
+        // print_stack(&val_st);
+        // print_ope_stack(&ope_st);
 
         switch(ope)
         {
@@ -544,103 +689,46 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                 cp_e = sym_e;
                 val = 0;
                 // is primitive value, variable, function calling. */
-                if(*cp_s >= '0' && *cp_s <= '9')
+                switch(check_symbol(symbol))
                 {
-                    // primitive type
-                    if(*cp_s == '0')
-                    {
-                        // binary or hexadecimal format.
-                        if((*(cp_s+1) != 'x') && (*(cp_s+1) != 'b'))
+                    case SYM_PRIMITIVE:
+                        if(get_primitive_val(&cp_s, cp_e, &val) != RETVAL_OK)
                         {
-                            // val is zero.
-                            cp_s++;
+                            TRACE();
+                            return RETVAL_SYNTAX;
                         }
-                        else if(*(cp_s+1)=='x')
+                    break;
+
+                    case SYM_VARIABLE:
+                        if(*cp_s>='a' && *cp_s<='z')
                         {
-                            // hexadecimal format
-                            // check syntax
-                            if(!(cp_s+1) || !(cp_s+2) || (cp_s+2)>=cp_e)
-                            {
-                                return RETVAL_SYNTAX;
-                            }
-                            // walk through 'x'
-                            cp_s+=2;
-                            // if nothing hex's character left after 'x', return error syntax.
-                            if(!((cp_s < cp_e) &&
-                                (((*cp_s>='0') && (*cp_s<='9')) ||
-                                ((*cp_s>='A') && (*cp_s<='F')) ||
-                                ((*cp_s>='a') && (*cp_s<='f')))
-                                ))
-                            {
-                                return RETVAL_SYNTAX;
-                            }
-                            while((cp_s < cp_e) &&
-                                (((*cp_s>='0') && (*cp_s<='9')) ||
-                                ((*cp_s>='A') && (*cp_s<='F')) ||
-                                ((*cp_s>='a') && (*cp_s<='f')))
-                                )
-                            {
-                                val <<= 4;
-                                if (*cp_s>='0' && *cp_s<='9')
-                                {
-                                    val += (*cp_s - '0');
-                                }
-                                else if (*cp_s>='a' && *cp_s<='f')
-                                {
-                                    val += (*cp_s - 'a' + 0xa);
-                                }
-                                else if (*cp_s>='A' && *cp_s<='F')
-                                {
-                                    val += (*cp_s - 'A' + 0xa);
-                                }
-                                cp_s++;
-                            }
+                            val = variables[*cp_s-'a'];
                         }
                         else
                         {
-                            // binary format.
-                            if(!((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='1')))
-                            {
-                                return RETVAL_SYNTAX;
-                            }
-                            // check syntax
-                            if(!(cp_s+1) || !(cp_s+2) || (cp_s+2)>=cp_e)
-                            {
-                                return RETVAL_SYNTAX;
-                            }
-                            // walk through b
-                            cp_s += 2;
-                            while((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='1'))
-                            {
-                                val = (val<<1) + (*cp_s - '0');
-                                cp_s++;
-                            }
+                            val = variables[*cp_s-'A'];
                         }
-                    }
-                    else
-                    {
-                        // decimal format.
-                        while((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='9'))
-                        {
-                            val *= 10;
-                            val += (*cp_s - '0');
-                            cp_s++;
-                        }
-                    }
+                    break;
+
+                    case SYM_FUNCTION:
+                    break;
+
+                    case SYM_ERROR:
+                    TRACE();
+                        return RETVAL_SYNTAX;
+                    break;
+
+                    default:
+                    break;
                 }
-                else if((*cp_s >= 'a' && *cp_s <= 'z') || (*cp_s >= 'A' && *cp_s <= 'Z'))
-                {
-                    // is variable or function.
-                    if((cp_s+1) != cp_e)
-                    {
-                        // is variable
-                    }
-                }
-                symbol = cp_s - 1;
+
+                symbol = cp_s;
                 push(&val_st, val);
             break;
 
             case OPE_CLOSE_PAREN:
+                int count;
+                count=0;
                 // see ')'
                 // while not match '('
                 // pop right, left hand value, operator in stack then calculate them.
@@ -648,8 +736,9 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                 {
                     // if no more val or operator in stack, syntax error.
                     // pop right-hand value & operator.
-                    if((pop(&val_st, &r_val) == RETVAL_EMPTY) || (pop(&ope_st, &tmp_ope) == RETVAL_EMPTY))
+                    if((pop(&val_st, &r_val) != RETVAL_OK) || (pop(&ope_st, &tmp_ope) != RETVAL_OK))
                     {
+                        TRACE();
                         return RETVAL_SYNTAX;
                     }
                     // operator !
@@ -660,8 +749,9 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                     else
                     {
                         // pop left-hand value.
-                        if(pop(&val_st, &l_val) == RETVAL_EMPTY)
+                        if(pop(&val_st, &l_val) != RETVAL_OK)
                         {
+                            TRACE();
                             return RETVAL_SYNTAX;
                         }
                         // calculate them.
@@ -670,14 +760,58 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                     // push value which was calculated to value stack.
                     push(&val_st, val);
                 }
+                open--;
                 // pop '('
-                if(pop(&ope_st, NULL) == RETVAL_EMPTY)
+                // if close parenthesis are more than open, return error syntax.
+                if((pop(&ope_st, NULL) != RETVAL_OK) || (open < 0))
                 {
+                    TRACE();
                     return RETVAL_SYNTAX;
                 }
             break;
 
-            default:
+            case OPE_OPEN_PAREN:
+                if(get_top(&ope_st) != OPE_OPEN_PAREN)
+                {
+                    if((get_top(&ope_st) == OPE_DEFAULT) && (!is_empty(&val_st)))
+                    {
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    }
+                }
+                open++;
+                push(&ope_st, ope);
+            break;
+
+            // operator !
+            case OPE_DIF_Z:
+                push(&ope_st, ope);
+            break;
+
+            // operator =
+            case OPE_ASSIGN:
+                push(&ope_st, ope);
+            break;
+
+            // calculate operator.
+            case OPE_D_EQU:
+            case OPE_DIF:
+            case OPE_D_OR:
+            case OPE_D_AND:
+            case OPE_LES_TH:
+            case OPE_GRE_TH:
+            case OPE_LES_EQU:
+            case OPE_GRE_EQU:
+            case OPE_LEF_SH:
+            case OPE_RIG_SH:
+            case OPE_XOR:
+            case OPE_AND:
+            case OPE_OR:
+            case OPE_ADD:
+            case OPE_SUB:
+            case OPE_MUL:
+            case OPE_DIV:
+            case OPE_MOD:
                 // if see operator has greater priority than stack's top, just push them to stack.
                 if(prcd(ope) > prcd(get_top(&ope_st)))
                 {
@@ -692,6 +826,7 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                         // pop right-hand value & operator.
                         if((pop(&val_st, &r_val) == RETVAL_EMPTY) || (pop(&ope_st, &tmp_ope) == RETVAL_EMPTY))
                         {
+                            TRACE();
                             return RETVAL_SYNTAX;
                         }
                         // operator !
@@ -704,6 +839,7 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                             // pop left-hand value.
                             if(pop(&val_st, &l_val) == RETVAL_EMPTY)
                             {
+                                TRACE();
                                 return RETVAL_SYNTAX;
                             }
                             // calculate them.
@@ -712,20 +848,23 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
                         // push value which was calculated to value stack.
                         push(&val_st, val);
                     }
+                    push(&ope_st, ope);
                 }
-            break;
-
-            case OPE_DIF_Z:
-            case OPE_OPEN_PAREN:
-                push(&ope_st, ope);
             break;
         }
     }//end of for.
+
+    if(open != 0)
+    {
+        TRACE();
+        return RETVAL_SYNTAX;
+    }
 
     while(get_top(&ope_st) != OPE_DEFAULT)
     {
         if((pop(&val_st, &r_val) == RETVAL_EMPTY) || (pop(&ope_st, &tmp_ope) == RETVAL_EMPTY))
         {
+            TRACE();
             return RETVAL_SYNTAX;
         }
         if(tmp_ope == OPE_DIF_Z)
@@ -736,6 +875,7 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
         {
             if(pop(&val_st, &l_val) == RETVAL_EMPTY)
             {
+                TRACE();
                 return RETVAL_SYNTAX;
             }
             val = calculate_operator(l_val, r_val, tmp_ope);
@@ -743,9 +883,19 @@ int convertip(char infix_s[], char infix_e[], int *const rs)
         push(&val_st, val);
     }
 
-    if(pop(&val_st, rs) == RETVAL_EMPTY)
+    // pop out result and default operator.
+    if((pop(&val_st, rs) != RETVAL_OK) || (pop(&ope_st, NULL) != RETVAL_OK))
     {
+        TRACE();
         return RETVAL_SYNTAX;
     }
+
+    // if there're any elements in stack, return error syntax.
+    if(!is_empty(&val_st) || !is_empty(&ope_st))
+    {
+        TRACE();
+        return RETVAL_SYNTAX;
+    }
+
     return RETVAL_OK;
 }
