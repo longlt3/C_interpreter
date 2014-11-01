@@ -15,7 +15,7 @@ INCFLAGS :=
 LIBFLAGS :=
 
 #running file name: 
-PROGRAM := program.elf
+PROGRAM := program.exe
 
 #clean command: 
 RM := rm -f

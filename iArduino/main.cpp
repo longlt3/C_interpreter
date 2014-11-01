@@ -5,92 +5,7 @@
 
 #include <string.h>
 
-#define TRACE(x)              printf("\n%s : %d\r\n",__FUNCTION__,__LINE__)
-#define TRACEINT(x)           printf("\n%s : %d : %d\r\n",__FUNCTION__,__LINE__,x)
-#define TRACESTR(x)           printf("\n%s : %d : %s\r\n",__FUNCTION__,__LINE__,x)
-#define TRACEADD(x)           printf("\n%s : %d : %p\r\n",__FUNCTION__,__LINE__,x)
-#define HR                    printf("------------------------------------------\n");
-enum RETVAL
-{
-    RETVAL_OK,
-    RETVAL_SYNTAX,
-    RETVAL_NULL,
-    RETVAL_EMPTY,
-    RETVAL_FULL,
-    RETVAL_NOT_SUPPORTED,
-};
-
-enum PUSH
-{
-    PUSH_VARIABLE,
-    PUSH_OPERATOR,
-    PUSH_ERR,
-};
-
-enum SYMBOL_TYPE
-{
-    SYM_PRIMITIVE,
-    SYM_VARIABLE,
-    SYM_FUNCTION,
-    SYM_ERROR,
-};
-
-enum OPERATOR
-{
-    OPE_DEFAULT,
-    OPE_OPEN_PAREN,         // (
-    OPE_CLOSE_PAREN,        // )
-    OPE_D_EQU,              // ==
-    OPE_DIF,                // !=
-    OPE_D_OR,               // ||
-    OPE_D_AND,              // &&
-    OPE_LES_TH,             // <
-    OPE_GRE_TH,             // >
-    OPE_LES_EQU,            // <=
-    OPE_GRE_EQU,            // >=
-    OPE_LEF_SH,             // <<
-    OPE_RIG_SH,             // >>
-    OPE_XOR,                // ^
-    OPE_AND,                // &
-    OPE_OR,                 // |
-    OPE_ADD,                // +
-    OPE_SUB,                // -
-    OPE_MUL,                // *
-    OPE_DIV,                // /
-    OPE_MOD,                // %
-    OPE_DIF_Z,              // !
-    OPE_EQU,             // =
-    OPE_D_ADD,              // ++
-    OPE_D_SUB,              // --
-
-    OPE_ERR,
-};
-
-#define MAX 20
-
-typedef struct _int_stack_t
-{
-    int elem[MAX];
-    int top;
-} int_stack_t;
-
-struct Function1 {
-     char *name;
-     int   len;
-     int (*func)(int);
-};
-
-struct Function2 {
-     char *name;
-     int   len;
-     int (*func)(int, int);
-};
-
-struct Function3 {
-     char *name;
-     int   len;
-     int (*func)(int, int, int);
-};
+#include "resource.h"
 
 int print(int val)
 {
@@ -131,13 +46,17 @@ int prio_operator(int ope);
 
 int calculate_operator(int l_operant, int r_operant, int ope);
 
-// int assignment_operator(int l_operant, int r_operant, int ope);
+int walk_through_parenthesis(char **start, char *end);
 
 int get_primitive_val(char ** sym_s, char const*const sym_e, int *val);
 
 int is_operator(char ** symbol);
 
+int run(char *prog, int size);
+
 int statement_executable(char infix_s[], char infix_e[], int *rs);
+
+int check_statement(char *statement);
 
 int check_symbol(char *sym_s);
 
@@ -282,28 +201,34 @@ void print_ope_stack(int_stack_t *st)
     printf("\n");
 }
 
+extern void test1();
+
 int main()
 {
-    // char sym_pri[] = "1", *sym_pri_e,
-    //     sym_func[] = "asd", *sym_func_e,
-    //     sym_var[] = "a", *sym_var_e
-    //     ;
-    // char expr[] = "((1+2) * 3 + 4 * (5+6)) * 7";
-    char expr[] = "1 + print  (  print   (10) )";
+    // char expr[] = "1 + print  (  print   (10) )";
+    int rs;
+    char expr[] = "1 + ()2";
+    // char prog[] = "for(i=0; i<10; i++){if(i<2) continue; print(i);}";
+    // char prog[] = "i=10,print(i),i=100,print(i); print(1^3)";
+    char prog[] = "i=100; if(!1)print(1);else print(i);";
     char *expr_e = expr + sizeof(expr);
     int val;
+    // test1();
     // print_symbol(expr);
-    int rs = statement_executable(expr, expr_e, &val);
-    print_ret_val(rs);
-    TRACEINT(val);
+    // rs = statement_executable(expr, expr_e, &val);
+    // print_ret_val(rs);
+    // TRACEINT(val);
     // TRACEINT(1+(2));
     // TRACEINT(ope_st.top);
+    rs = run(prog, sizeof(prog));
+    print_ret_val(rs);
+
     return 0;
 }
 
 int is_white_space(char ch)
 {
-    return (ch == '\0') || (ch == '\n') || (ch == '\r') || (ch == '\t') || (ch == ' ');
+    return (ch == '\n') || (ch == '\r') || (ch == '\t') || (ch == ' ');
 }
 
 int is_empty(int_stack_t *st)
@@ -454,6 +379,41 @@ int calculate_operator(int l_operant, int r_operant, int ope)
             return (l_operant % r_operant);
     }
     return 0;
+}
+
+int walk_through_parenthesis(char **start, char *end)
+{
+    int in;
+    char *cp_s;
+
+    if(!start || !*start || !end || *start>=end)
+    {
+        return RETVAL_NULL;
+    }
+    cp_s = *start;
+    while(cp_s<end && *cp_s!='(')
+    {
+        cp_s+=1;
+    }
+
+    for(in=1, cp_s++; (cp_s<end) && (in); cp_s++)
+    {
+        if(*cp_s == '(')
+        {
+            in++;
+        }
+        else if(*cp_s ==')')
+        {
+            in--;
+        }
+    }
+
+    if(in)
+    {
+        return RETVAL_SYNTAX;
+    }
+    *start = cp_s;
+    return RETVAL_OK;
 }
 
 int get_primitive_val(char ** sym_s, char *const sym_e, int *val)
@@ -686,6 +646,70 @@ int is_operator(char ** symbol)
     return ret;
 }
 
+int check_statement(char *statement)
+{
+    if(!statement)
+    {
+        return STATEMENT_ERROR;
+    }
+    if(!strncmp(statement, "for", sizeof("for") - 1))
+    {
+        return STATEMENT_FOR;
+    }
+
+    if(!strncmp(statement, "while", sizeof("while") - 1))
+    {
+        return STATEMENT_WHILE;
+    }
+
+    if(!strncmp(statement, "if", sizeof("if") - 1))
+    {
+        return STATEMENT_IF;
+    }
+
+    if(!strncmp(statement, "else", sizeof("else") - 1))
+    {
+        return STATEMENT_ELSE;
+    }
+
+    if(!strncmp(statement, "continue", sizeof("continue") - 1))
+    {
+        return STATEMENT_CONTINUE;
+    }
+
+    if(!strncmp(statement, "continue", sizeof("continue") - 1))
+    {
+        return STATEMENT_END_STM;
+    }
+
+    if(!strncmp(statement, "break", sizeof("break") - 1))
+    {
+        return STATEMENT_BREAK;
+    }
+
+    if(*statement == '{')
+    {
+        return STATEMENT_OPEN_BRK;
+    }
+
+    if(*statement == '}')
+    {
+        return STATEMENT_CLOSE_BRK;
+    }
+
+    if(*statement == ';')
+    {
+        return STATEMENT_END_STM;
+    }
+
+    if(*statement == ',')
+    {
+        return STATEMENT_END_STM;
+    }
+
+    return STATEMENT_ERROR;
+}
+
 int check_symbol(char *symbol)
 {
     char * sym_s;
@@ -725,6 +749,245 @@ int check_symbol(char *symbol)
     return SYM_ERROR;
 }
 
+int run(char *prog, int size)
+{
+    char *prog_s, *prog_e;
+    char *cp_s, *cp_e;
+    int state, run_step, val, condition, in_brk;
+    state = STATEMENT_INIT;
+    run_step = RUN_STEP_INIT;
+    prog_s = prog;
+    prog_e = prog_s + size;
+    int_stack_t cond_st, state_st;
+    condition = RUN_CONDITION_INIT;
+    memset(&cond_st, 0, sizeof(int_stack_t));
+    memset(&state_st, 0, sizeof(int_stack_t));
+    push(&cond_st, RUN_CONDITION_INIT);
+    TRACE();
+    for(; prog_s < prog_e; prog_s++)
+    {
+        if(is_white_space(*prog_s))
+        {
+            continue;
+        }
+
+        TRACESTR(prog_s);
+
+        if(state == STATEMENT_INIT)
+        {
+            state = check_statement(prog_s);
+        }
+
+        switch(state)
+        {
+            case STATEMENT_FOR:
+            break;
+
+            case STATEMENT_WHILE:
+            break;
+
+            case STATEMENT_IF:
+                switch(run_step)
+                {
+                    case RUN_STEP_INIT:
+                    case RUN_STEP_NOT_RUN:
+                        prog_s = prog_s + sizeof("if") - 1;
+                    //     run_step = RUN_STEP_IF_COND;
+                    // break;
+
+                    case RUN_STEP_IF_COND:
+                        if(condition != RUN_CONDITION_INIT)
+                        {
+                            push(&cond_st, condition);
+                        }
+                        cp_s = prog_s;
+                        if(walk_through_parenthesis(&prog_s, prog_e) != RETVAL_OK)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                        TRACESTR(cp_s);TRACESTR(prog_s);
+                        if(statement_executable(cp_s, prog_s, &condition) != RETVAL_OK)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                        if(!condition)
+                        {
+                            condition = RUN_CONDITION_FALSE;
+                            // run_step = RUN_STEP_NOT_RUN;
+                            while(is_white_space(*prog_s) && (prog_s < prog_e))
+                            {
+                                prog_s++;
+                            }
+                            if(prog_s >= prog_e)
+                            {
+                                TRACE();
+                                return RETVAL_SYNTAX;
+                            }
+                            if(*prog_s=='{')
+                            {
+                                while((prog_s<prog_e) && (*prog_s!='}'))
+                                {
+                                    prog_s++;
+                                }
+                                if(prog_s >= prog_e)
+                                {
+                                    TRACE();
+                                    return RETVAL_SYNTAX;
+                                }
+                            }
+                            else
+                            {
+                                while((*prog_s != ';') && (prog_s < prog_e))
+                                {
+                                    prog_s++;
+                                }
+                                if(prog_s >= prog_e)
+                                {
+                                    TRACE();
+                                    return RETVAL_SYNTAX;
+                                }
+                                cp_e = prog_s;
+                                while(is_white_space(*cp_e) && (cp_e < prog_e))
+                                {
+                                    cp_e++;
+                                }
+                                if(cp_e < prog_e)
+                                {
+                                    if(!strncmp(cp_e, "else", sizeof("else") - 1))
+                                    {
+
+                                    }
+                                    else
+                                    {
+
+                                    }
+                                }
+                            }
+                            TRACESTR(prog_s);
+                        }
+                        else
+                        {
+                            // prog_s = prog_s + sizeof("if") - 1;
+                            condition = RUN_CONDITION_TRUE;
+                        }
+                        state = STATEMENT_INIT;
+                        prog_s--;
+                        TRACESTR(prog_s);
+                    break;
+
+                    case RUN_STEP_IF_EXE:
+                    break;
+                }
+            break;
+
+            case STATEMENT_ELSE:
+                prog_s = prog_s + sizeof("else") - 1;
+                TRACESTR(prog_s);
+                if(prog_s>=prog_e || (!is_white_space(*prog_s)))
+                {
+                    TRACE();
+                    return RETVAL_SYNTAX;
+                }
+                if(condition == RUN_CONDITION_TRUE)
+                {
+                    while(is_white_space(*prog_s) && (prog_s < prog_e))
+                    {
+                        prog_s++;
+                    }
+                    if(prog_s >= prog_e)
+                    {
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    }
+                    if(*prog_s=='{')
+                    {
+                        while((prog_s<prog_e) && (*prog_s!='}'))
+                        {
+                            prog_s++;
+                        }
+                        if(prog_s >= prog_e)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                    }
+                    else
+                    {
+                        while((*prog_s != ';') && (prog_s < prog_e))
+                        {
+                            prog_s++;
+                        }
+                        if(prog_s >= prog_e)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                    }
+                }
+                if(pop(&cond_st, &condition) != RETVAL_OK)
+                {
+                    condition = RUN_CONDITION_INIT;
+                }
+                state = STATEMENT_INIT;
+            break;
+
+            case STATEMENT_CONTINUE:
+            break;
+
+            case STATEMENT_BREAK:
+            break;
+
+            case STATEMENT_OPEN_BRK:
+                in_brk++;
+            case STATEMENT_END_STM:
+                state = STATEMENT_INIT;
+            break;
+
+            case STATEMENT_CLOSE_BRK:
+                in_brk--;
+                if(pop(&cond_st, &condition) != RETVAL_OK)
+                {
+                    condition = RUN_CONDITION_INIT;
+                }
+                state = STATEMENT_INIT;
+            break;
+
+            case STATEMENT_ERROR:
+                TRACESTR(prog_s);
+
+                if(prog_s == prog_e - 1)
+                {
+                    return RETVAL_OK;
+                }
+                TRACESTR(prog_s);
+                while(is_white_space(*prog_s) && (prog_s < prog_e))
+                {
+                    prog_s++;
+                }
+                cp_s = prog_s;
+                while((*prog_s != ',') && (*prog_s != ';') && (prog_s < prog_e))
+                {
+                    prog_s++;
+                }
+                if(statement_executable(cp_s, prog_s, NULL) != RETVAL_OK)
+                {
+                    TRACE();
+                    return RETVAL_SYNTAX;
+                }
+                state = STATEMENT_INIT;
+            break;
+        }
+    }
+    if(run_step == RUN_STEP_INIT)
+    {
+        TRACE();
+        return RETVAL_SYNTAX;
+    }
+    return RETVAL_OK;
+}
+
 int statement_executable(char infix_s[], char infix_e[], int *rs)
 {
     char *symbol, *sym_s, *sym_e;
@@ -735,13 +998,16 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
     char *cp_s,*cp_e;
     int val, ret_val;
     int_stack_t var_st, val_st, ope_st;
-
+    TRACESTR(infix_s);TRACESTR(infix_e);
+    if(infix_s == infix_e)
+    {
+        return RETVAL_SYNTAX;
+    }
     memset(&ope_st, 0, sizeof(int_stack_t));
     memset(&val_st, 0, sizeof(int_stack_t));
     memset(&var_st, 0, sizeof(int_stack_t));
     push(&ope_st, OPE_DEFAULT);
     prev_push = PUSH_OPERATOR;
-
     open = 0;
     sym_s = infix_s;
     sym_e = infix_e;
@@ -781,23 +1047,26 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
                     break;
 
                     case SYM_VARIABLE:
+                        int index;
                         if(*cp_s>='a' && *cp_s<='z')
                         {
-                            val = variables[*cp_s-'a'];
+                            index = *cp_s-'a';
+                            val = variables[index];
                         }
                         else
                         {
-                            val = variables[*cp_s-'A'];
+                            index = *cp_s-'A';
+                            val = variables[index];
                         }
-                        push(&var_st, (*cp_s-'A'));
+                        push(&var_st, (index));
                     break;
 
                     case SYM_FUNCTION:
                         int i, j, called, arg;
-                        const struct Function1 *f;
                         called = 0;
                         for (i=0; i<FUNC1_NUM; i++)
                         {
+                            const struct Function1 *f;
                             f = func1+i;
                             for(j=0; !is_white_space(*(cp_s+j)) && (*(cp_s+j) == *(f->name+j)); j++);
                             if(j == f->len)
@@ -809,8 +1078,14 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
                                 while(*cp_s++ != ')');
                                 statement_executable(cp_tmp, cp_s - 1, &arg);
                                 val = (*f->func)(arg);
+                                cp_s++;
                             }
                         }
+                        if(!called)
+                        {
+
+                        }
+
                         if(!called)
                         {
                             TRACE();
@@ -826,7 +1101,6 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
                     default:
                     break;
                 }
-
                 symbol = cp_s;
                 push(&val_st, val);
                 prev_push = PUSH_VARIABLE;
@@ -834,6 +1108,11 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
 
             case OPE_CLOSE_PAREN:
                 int count;
+                if(prev_push == PUSH_OPERATOR)
+                {
+                    TRACE();
+                    return RETVAL_SYNTAX;
+                }
                 count=0;
                 // see ')'
                 // while not match '('
@@ -907,7 +1186,6 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
 
             // operator =
             case OPE_EQU:
-                TRACE();
                 push(&ope_st, ope);
                 prev_push = PUSH_OPERATOR;
             break;
@@ -993,7 +1271,7 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
 
     if(open != 0)
     {
-        TRACE();
+        TRACEINT(open);
         return RETVAL_SYNTAX;
     }
 
@@ -1035,6 +1313,7 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
     if((pop(&val_st, rs) != RETVAL_OK) || (pop(&ope_st, NULL) != RETVAL_OK))
     {
         TRACE();
+        print_ope_stack(&ope_st); print_stack(&val_st);
         return RETVAL_SYNTAX;
     }
 

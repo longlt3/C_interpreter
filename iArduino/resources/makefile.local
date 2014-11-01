@@ -2,10 +2,10 @@
 export GNUMakeInstallDirPath=
 
 #Project directory path: 
-export ProjDirPath=/home/longlt/workspace/cpp/C_interpreter/iArduino
+export ProjDirPath=/cygdrive/d/workspace/C_interpreter/iArduino
 
 #Make directory path: 
-export MakeDirPath=/home/longlt/workspace/cpp/C_interpreter/iArduino
+export MakeDirPath=/cygdrive/d/workspace/C_interpreter/iArduino
 
 #Make resources directory path: 
 export MakeResDirPath=./resources

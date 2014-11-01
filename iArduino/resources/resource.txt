@@ -1,7 +1,7 @@
 ___GNUMakeInstallDirPath___
 ;
 ___projDirPath___
-/home/longlt/workspace/cpp/C_interpreter/iArduino
+/cygdrive/d/workspace/C_interpreter/iArduino
 ;
 ___sourcesext___
 cpp
@@ -12,11 +12,11 @@ g++
 ___makefileargs___
 ;
 ___commonargs___
--Wall
--fmessage-length=0
 -O0
--g
 -c
+-fmessage-length=0
+-Wall
+-g
 ;
 ___includes___
 ;
