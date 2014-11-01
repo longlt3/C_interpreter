@@ -17,6 +17,7 @@ enum RETVAL
     RETVAL_NULL,
     RETVAL_EMPTY,
     RETVAL_FULL,
+    RETVAL_NOT_SUPPORTED,
 };
 
 enum PUSH
@@ -73,9 +74,44 @@ typedef struct _int_stack_t
     int top;
 } int_stack_t;
 
-int_stack_t ope_st;
-int_stack_t val_st;
-int_stack_t var_st;
+struct Function1 {
+     char *name;
+     int   len;
+     int (*func)(int);
+};
+
+struct Function2 {
+     char *name;
+     int   len;
+     int (*func)(int, int);
+};
+
+struct Function3 {
+     char *name;
+     int   len;
+     int (*func)(int, int, int);
+};
+
+int print(int val)
+{
+    printf("%d\n", val);
+    return val;
+}
+
+const struct Function1 func1[] = {
+     {"print", 5, print},
+};
+#define FUNC1_NUM 1
+
+const struct Function2 func2[] = {
+    0
+};
+#define FUNC2_NUM 0
+
+const struct Function3 func3[] = {
+    0
+};
+#define FUNC3_NUM 0
 
 int variables[26] = {0};
 
@@ -123,6 +159,8 @@ void print_ret_val(int rs)
         break;
         case RETVAL_FULL:
             printf("RETVAL_FULL\n");
+        case RETVAL_NOT_SUPPORTED:
+            printf("RETVAL_NOT_SUPPORTED\n");
         break;
     }
 }
@@ -251,7 +289,7 @@ int main()
     //     sym_var[] = "a", *sym_var_e
     //     ;
     // char expr[] = "((1+2) * 3 + 4 * (5+6)) * 7";
-    char expr[] = "1 + (a = 100)";
+    char expr[] = "1 + print  (  print   (10) )";
     char *expr_e = expr + sizeof(expr);
     int val;
     // print_symbol(expr);
@@ -498,7 +536,7 @@ int get_primitive_val(char ** sym_s, char *const sym_e, int *val)
             }
         }
     }
-    else // decimal format.
+    else if(*cp_s>='0' && *cp_s<='9') // decimal format.
     {
         while((cp_s < cp_e) && (*cp_s>='0') && (*cp_s<='9'))
         {
@@ -506,6 +544,11 @@ int get_primitive_val(char ** sym_s, char *const sym_e, int *val)
             *val += (*cp_s - '0');
             cp_s++;
         }
+    }
+    else // bool
+    {
+        TRACE();
+        return RETVAL_SYNTAX;
     }
     cp_s--;
     *sym_s = cp_s;
@@ -658,7 +701,7 @@ int check_symbol(char *symbol)
     else if((*symbol >= 'a' && *symbol <= 'z') || (*symbol >= 'A' && *symbol <= 'Z'))
     {
         symbol++;
-        while(symbol && !is_white_space(*symbol) &&
+        while(symbol &&
             ((*symbol >= '0' && *symbol <= '9') ||
                 (*symbol >= 'a' && *symbol <= 'z') ||
                 (*symbol >= 'A' && *symbol <= 'Z'))
@@ -669,6 +712,10 @@ int check_symbol(char *symbol)
         if(symbol == (sym_s + 1))
         {
             return SYM_VARIABLE;
+        }
+        while(is_white_space(*symbol))
+        {
+            symbol++;
         }
         if(*symbol == '(')
         {
@@ -687,9 +734,11 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
     int r_val, l_val, tmp_ope;
     char *cp_s,*cp_e;
     int val, ret_val;
+    int_stack_t var_st, val_st, ope_st;
 
-    memset(&ope_st, 0, sizeof(ope_st));
-    memset(&val_st, 0, sizeof(val_st));
+    memset(&ope_st, 0, sizeof(int_stack_t));
+    memset(&val_st, 0, sizeof(int_stack_t));
+    memset(&var_st, 0, sizeof(int_stack_t));
     push(&ope_st, OPE_DEFAULT);
     prev_push = PUSH_OPERATOR;
 
@@ -702,6 +751,7 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
         {
             continue;
         }
+
         ope = is_operator(&symbol);
 
         TRACESTR(symbol);
@@ -743,7 +793,29 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
                     break;
 
                     case SYM_FUNCTION:
-
+                        int i, j, called, arg;
+                        const struct Function1 *f;
+                        called = 0;
+                        for (i=0; i<FUNC1_NUM; i++)
+                        {
+                            f = func1+i;
+                            for(j=0; !is_white_space(*(cp_s+j)) && (*(cp_s+j) == *(f->name+j)); j++);
+                            if(j == f->len)
+                            {
+                                char *cp_tmp;
+                                called = 1;
+                                while(*cp_s++ != '(');
+                                cp_tmp = cp_s;
+                                while(*cp_s++ != ')');
+                                statement_executable(cp_tmp, cp_s - 1, &arg);
+                                val = (*f->func)(arg);
+                            }
+                        }
+                        if(!called)
+                        {
+                            TRACE();
+                            return RETVAL_NOT_SUPPORTED;
+                        }
                     break;
 
                     case SYM_ERROR:
