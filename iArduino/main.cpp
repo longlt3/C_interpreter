@@ -1,8 +1,6 @@
 
 #include <stdio.h>
-
-// #include<conio.h>
-
+#include <stdlib.h>
 #include <string.h>
 
 #include "resource.h"
@@ -54,7 +52,7 @@ int is_operator(char ** symbol);
 
 int run(char *prog, int size);
 
-int statement_executable(char infix_s[], char infix_e[], int *rs);
+int statement_executino(char infix_s[], char infix_e[], int *rs);
 
 int check_statement(char *statement);
 
@@ -210,12 +208,12 @@ int main()
     char expr[] = "1 + ()2";
     // char prog[] = "for(i=0; i<10; i++){if(i<2) continue; print(i);}";
     // char prog[] = "i=10,print(i),i=100,print(i); print(1^3)";
-    char prog[] = "i=100; if(!1)print(1);else print(i);";
+    char prog[] = "i=100; if(0) { if(0) print(1); else print(0xFF); } if(1) print(1); else print(i);";
     char *expr_e = expr + sizeof(expr);
     int val;
     // test1();
     // print_symbol(expr);
-    // rs = statement_executable(expr, expr_e, &val);
+    // rs = statement_executino(expr, expr_e, &val);
     // print_ret_val(rs);
     // TRACEINT(val);
     // TRACEINT(1+(2));
@@ -677,11 +675,6 @@ int check_statement(char *statement)
         return STATEMENT_CONTINUE;
     }
 
-    if(!strncmp(statement, "continue", sizeof("continue") - 1))
-    {
-        return STATEMENT_END_STM;
-    }
-
     if(!strncmp(statement, "break", sizeof("break") - 1))
     {
         return STATEMENT_BREAK;
@@ -753,16 +746,17 @@ int run(char *prog, int size)
 {
     char *prog_s, *prog_e;
     char *cp_s, *cp_e;
-    int state, run_step, val, condition, in_brk;
+    int state, run_step, val, condition, in_brk, bracket;
     state = STATEMENT_INIT;
     run_step = RUN_STEP_INIT;
+    bracket = BRACKET_INIT;
     prog_s = prog;
     prog_e = prog_s + size;
-    int_stack_t cond_st, state_st;
-    condition = RUN_CONDITION_INIT;
+    int_stack_t cond_st, brk_st, run_step_st;
+    condition = CONDITION_INIT;
     memset(&cond_st, 0, sizeof(int_stack_t));
-    memset(&state_st, 0, sizeof(int_stack_t));
-    push(&cond_st, RUN_CONDITION_INIT);
+    memset(&brk_st, 0, sizeof(int_stack_t));
+    memset(&run_step_st, 0, sizeof(int_stack_t));
     TRACE();
     for(; prog_s < prog_e; prog_s++)
     {
@@ -770,9 +764,7 @@ int run(char *prog, int size)
         {
             continue;
         }
-
         TRACESTR(prog_s);
-
         if(state == STATEMENT_INIT)
         {
             state = check_statement(prog_s);
@@ -784,22 +776,37 @@ int run(char *prog, int size)
             break;
 
             case STATEMENT_WHILE:
+                switch(run_step)
+                {
+                    case RUN_STEP_INIT:
+                    // case RUN_STEP_WHILE_COND:
+                    //     if(bracket != BRACKET_CLOSE)
+                    //     {
+                    //         push(&run_step_st, run_step);
+                    //         push(&cond_st, condition);
+                    //         push(&brk_st, bracket);
+                    //     }
+                    //     run_step = RUN_STEP_WHILE_EXE;
+                    // break;
+                    // case RUN_STEP_WHILE_EXE:
+                    break;
+                }
             break;
 
             case STATEMENT_IF:
                 switch(run_step)
                 {
                     case RUN_STEP_INIT:
-                    case RUN_STEP_NOT_RUN:
-                        prog_s = prog_s + sizeof("if") - 1;
-                    //     run_step = RUN_STEP_IF_COND;
-                    // break;
-
-                    case RUN_STEP_IF_COND:
-                        if(condition != RUN_CONDITION_INIT)
+                    case RUN_STEP_IF:
+                        if(bracket != BRACKET_CLOSE)
                         {
+                            push(&run_step_st, run_step);
                             push(&cond_st, condition);
+                            push(&brk_st, bracket);
                         }
+                        run_step = RUN_STEP_IF;
+
+                        prog_s = prog_s + sizeof("if") - 1;
                         cp_s = prog_s;
                         if(walk_through_parenthesis(&prog_s, prog_e) != RETVAL_OK)
                         {
@@ -807,15 +814,15 @@ int run(char *prog, int size)
                             return RETVAL_SYNTAX;
                         }
                         TRACESTR(cp_s);TRACESTR(prog_s);
-                        if(statement_executable(cp_s, prog_s, &condition) != RETVAL_OK)
+                        if(statement_executino(cp_s, prog_s, &condition) != RETVAL_OK)
                         {
                             TRACE();
                             return RETVAL_SYNTAX;
                         }
+
                         if(!condition)
                         {
-                            condition = RUN_CONDITION_FALSE;
-                            // run_step = RUN_STEP_NOT_RUN;
+                            condition = CONDITION_FALSE;
                             while(is_white_space(*prog_s) && (prog_s < prog_e))
                             {
                                 prog_s++;
@@ -827,10 +834,20 @@ int run(char *prog, int size)
                             }
                             if(*prog_s=='{')
                             {
-                                while((prog_s<prog_e) && (*prog_s!='}'))
+                                int tmp_brk = 1;
+                                while((prog_s<prog_e) && (tmp_brk>0))
                                 {
                                     prog_s++;
+                                    if(*prog_s=='{')
+                                    {
+                                        tmp_brk++;
+                                    }
+                                    else if(*prog_s=='}')
+                                    {
+                                        tmp_brk--;
+                                    }
                                 }
+                                prog_s++;
                                 if(prog_s >= prog_e)
                                 {
                                     TRACE();
@@ -848,36 +865,14 @@ int run(char *prog, int size)
                                     TRACE();
                                     return RETVAL_SYNTAX;
                                 }
-                                cp_e = prog_s;
-                                while(is_white_space(*cp_e) && (cp_e < prog_e))
-                                {
-                                    cp_e++;
-                                }
-                                if(cp_e < prog_e)
-                                {
-                                    if(!strncmp(cp_e, "else", sizeof("else") - 1))
-                                    {
-
-                                    }
-                                    else
-                                    {
-
-                                    }
-                                }
                             }
-                            TRACESTR(prog_s);
                         }
                         else
                         {
-                            // prog_s = prog_s + sizeof("if") - 1;
-                            condition = RUN_CONDITION_TRUE;
+                            condition = CONDITION_TRUE;
                         }
                         state = STATEMENT_INIT;
                         prog_s--;
-                        TRACESTR(prog_s);
-                    break;
-
-                    case RUN_STEP_IF_EXE:
                     break;
                 }
             break;
@@ -885,12 +880,12 @@ int run(char *prog, int size)
             case STATEMENT_ELSE:
                 prog_s = prog_s + sizeof("else") - 1;
                 TRACESTR(prog_s);
-                if(prog_s>=prog_e || (!is_white_space(*prog_s)))
+                if(condition == CONDITION_INIT || prog_s>=prog_e )
                 {
-                    TRACE();
+                    TRACEINT(condition);HR;
                     return RETVAL_SYNTAX;
                 }
-                if(condition == RUN_CONDITION_TRUE)
+                if(condition == CONDITION_TRUE)
                 {
                     while(is_white_space(*prog_s) && (prog_s < prog_e))
                     {
@@ -903,10 +898,20 @@ int run(char *prog, int size)
                     }
                     if(*prog_s=='{')
                     {
-                        while((prog_s<prog_e) && (*prog_s!='}'))
+                        int tmp_brk = 1;
+                        while((prog_s<prog_e) && (tmp_brk>0))
                         {
                             prog_s++;
+                            if(*prog_s=='{')
+                            {
+                                tmp_brk++;
+                            }
+                            else if(*prog_s=='}')
+                            {
+                                tmp_brk--;
+                            }
                         }
+                        prog_s++;
                         if(prog_s >= prog_e)
                         {
                             TRACE();
@@ -926,9 +931,17 @@ int run(char *prog, int size)
                         }
                     }
                 }
+                if(pop(&run_step_st, &run_step) != RETVAL_OK)
+                {
+                    run_step = RUN_STEP_INIT;
+                }
+                if(pop(&brk_st, &bracket) != RETVAL_OK)
+                {
+                    bracket = BRACKET_INIT;
+                }
                 if(pop(&cond_st, &condition) != RETVAL_OK)
                 {
-                    condition = RUN_CONDITION_INIT;
+                    condition = CONDITION_INIT;
                 }
                 state = STATEMENT_INIT;
             break;
@@ -941,41 +954,62 @@ int run(char *prog, int size)
 
             case STATEMENT_OPEN_BRK:
                 in_brk++;
+                state = STATEMENT_INIT;
+                bracket = BRACKET_OPEN;
+            break;
+
             case STATEMENT_END_STM:
                 state = STATEMENT_INIT;
             break;
 
             case STATEMENT_CLOSE_BRK:
                 in_brk--;
+                state = STATEMENT_INIT;
+                if(pop(&run_step_st, &run_step) != RETVAL_OK)
+                {
+                    run_step = RUN_STEP_INIT;
+                }
+                if(pop(&brk_st, &bracket) != RETVAL_OK)
+                {
+                    bracket = BRACKET_INIT;
+                }
                 if(pop(&cond_st, &condition) != RETVAL_OK)
                 {
-                    condition = RUN_CONDITION_INIT;
+                    TRACE();HR;
+                    condition = CONDITION_INIT;
                 }
-                state = STATEMENT_INIT;
             break;
 
             case STATEMENT_ERROR:
-                TRACESTR(prog_s);
-
                 if(prog_s == prog_e - 1)
                 {
                     return RETVAL_OK;
                 }
+
                 TRACESTR(prog_s);
-                while(is_white_space(*prog_s) && (prog_s < prog_e))
-                {
-                    prog_s++;
-                }
                 cp_s = prog_s;
-                while((*prog_s != ',') && (*prog_s != ';') && (prog_s < prog_e))
+                while((*prog_s != ';') && (prog_s < prog_e))
                 {
-                    prog_s++;
+                    while((*prog_s != ',') && (*prog_s != ';') && (prog_s < prog_e))
+                    {
+                        prog_s++;
+                    }
+                    if(statement_executino(cp_s, prog_s, NULL) != RETVAL_OK)
+                    {
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    }
+                    if(prog_s < prog_e)
+                    {
+                        cp_s = prog_s+1;
+                    }
                 }
-                if(statement_executable(cp_s, prog_s, NULL) != RETVAL_OK)
+
+                if((bracket != BRACKET_OPEN) && (run_step != RUN_STEP_INIT))
                 {
-                    TRACE();
-                    return RETVAL_SYNTAX;
+                    bracket = BRACKET_CLOSE;
                 }
+
                 state = STATEMENT_INIT;
             break;
         }
@@ -988,7 +1022,7 @@ int run(char *prog, int size)
     return RETVAL_OK;
 }
 
-int statement_executable(char infix_s[], char infix_e[], int *rs)
+int statement_executino(char infix_s[], char infix_e[], int *rs)
 {
     char *symbol, *sym_s, *sym_e;
     int ope;
@@ -1076,7 +1110,7 @@ int statement_executable(char infix_s[], char infix_e[], int *rs)
                                 while(*cp_s++ != '(');
                                 cp_tmp = cp_s;
                                 while(*cp_s++ != ')');
-                                statement_executable(cp_tmp, cp_s - 1, &arg);
+                                statement_executino(cp_tmp, cp_s - 1, &arg);
                                 val = (*f->func)(arg);
                                 cp_s++;
                             }
