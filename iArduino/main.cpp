@@ -52,7 +52,7 @@ int is_operator(char ** symbol);
 
 int run(char *prog, int size);
 
-int statement_executino(char infix_s[], char infix_e[], int *rs);
+int statement_execution(char infix_s[], char infix_e[], int *rs);
 
 int check_statement(char *statement);
 
@@ -208,7 +208,8 @@ int main()
     char expr[] = "1 + ()2";
     // char prog[] = "for(i=0; i<10; i++){if(i<2) continue; print(i);}";
     // char prog[] = "i=10,print(i),i=100,print(i); print(1^3)";
-    char prog[] = "i=100; if(0) { if(0) print(1); else print(0xFF); } if(1) print(1); else print(i);";
+    char prog[] = "i=100; if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4);";
+    // char prog[] = "if(0) print(0xAA); else print(0xFF);";
     char *expr_e = expr + sizeof(expr);
     int val;
     // test1();
@@ -394,7 +395,7 @@ int walk_through_parenthesis(char **start, char *end)
         cp_s+=1;
     }
 
-    for(in=1, cp_s++; (cp_s<end) && (in); cp_s++)
+    for(in=1, cp_s++; (cp_s<end) && (in>0); cp_s++)
     {
         if(*cp_s == '(')
         {
@@ -746,7 +747,8 @@ int run(char *prog, int size)
 {
     char *prog_s, *prog_e;
     char *cp_s, *cp_e;
-    int state, run_step, val, condition, in_brk, bracket;
+    int state, run_step, val, condition, in_brk, bracket, prev_state, by_pass;
+    prev_state = state;
     state = STATEMENT_INIT;
     run_step = RUN_STEP_INIT;
     bracket = BRACKET_INIT;
@@ -754,9 +756,13 @@ int run(char *prog, int size)
     prog_e = prog_s + size;
     int_stack_t cond_st, brk_st, run_step_st;
     condition = CONDITION_INIT;
+    by_pass = 0;
     memset(&cond_st, 0, sizeof(int_stack_t));
     memset(&brk_st, 0, sizeof(int_stack_t));
     memset(&run_step_st, 0, sizeof(int_stack_t));
+    push(&cond_st, CONDITION_INIT);
+    push(&brk_st, BRACKET_INIT);
+    push(&run_step_st, RUN_STEP_INIT);
     TRACE();
     for(; prog_s < prog_e; prog_s++)
     {
@@ -798,15 +804,12 @@ int run(char *prog, int size)
                 {
                     case RUN_STEP_INIT:
                     case RUN_STEP_IF:
-                        if(bracket != BRACKET_CLOSE)
-                        {
-                            push(&run_step_st, run_step);
-                            push(&cond_st, condition);
-                            push(&brk_st, bracket);
-                        }
                         run_step = RUN_STEP_IF;
-
                         prog_s = prog_s + sizeof("if") - 1;
+                        if(get_size(&cond_st)==0 || prog_s >= prog_e)
+                        {
+                            return RETVAL_SYNTAX;
+                        }
                         cp_s = prog_s;
                         if(walk_through_parenthesis(&prog_s, prog_e) != RETVAL_OK)
                         {
@@ -814,65 +817,102 @@ int run(char *prog, int size)
                             return RETVAL_SYNTAX;
                         }
                         TRACESTR(cp_s);TRACESTR(prog_s);
-                        if(statement_executino(cp_s, prog_s, &condition) != RETVAL_OK)
+                        if(!by_pass)
                         {
-                            TRACE();
-                            return RETVAL_SYNTAX;
-                        }
-
-                        if(!condition)
-                        {
-                            condition = CONDITION_FALSE;
-                            while(is_white_space(*prog_s) && (prog_s < prog_e))
-                            {
-                                prog_s++;
-                            }
-                            if(prog_s >= prog_e)
+                            int val;
+                            if(statement_execution(cp_s, prog_s, &val) != RETVAL_OK)
                             {
                                 TRACE();
                                 return RETVAL_SYNTAX;
                             }
-                            if(*prog_s=='{')
+                            if(!val)
                             {
-                                int tmp_brk = 1;
-                                while((prog_s<prog_e) && (tmp_brk>0))
-                                {
-                                    prog_s++;
-                                    if(*prog_s=='{')
-                                    {
-                                        tmp_brk++;
-                                    }
-                                    else if(*prog_s=='}')
-                                    {
-                                        tmp_brk--;
-                                    }
-                                }
-                                prog_s++;
-                                if(prog_s >= prog_e)
-                                {
-                                    TRACE();
-                                    return RETVAL_SYNTAX;
-                                }
+                                condition = CONDITION_FALSE;
+                                by_pass = 1;
                             }
                             else
                             {
-                                while((*prog_s != ';') && (prog_s < prog_e))
-                                {
-                                    prog_s++;
-                                }
-                                if(prog_s >= prog_e)
-                                {
-                                    TRACE();
-                                    return RETVAL_SYNTAX;
-                                }
+                                condition = CONDITION_TRUE;
                             }
+                            push(&cond_st, condition);
+                            // push(&run_step_st, run_step);
+                            push(&brk_st, BRACKET_INIT);
                         }
-                        else
-                        {
-                            condition = CONDITION_TRUE;
-                        }
+                        // if(get_top(&cond_st)==CONDITION_FALSE)
+                        // {
+                        //     by_pass = 1;
+                        // }
+                        // else
+                        // {
+                        //     by_pass = 0;
+                        //     if(statement_execution(cp_s, prog_s, &condition) != RETVAL_OK)
+                        //     {
+                        //         TRACE();
+                        //         return RETVAL_SYNTAX;
+                        //     }
+                        //     push(&cond_st, condition);
+                        //     // push(&run_step_st, run_step);
+                        //     push(&brk_st, BRACKET_INIT);
+                        // }
+
+                        // if(!condition)
+                        // {
+                        //     condition = CONDITION_FALSE;
+                        //     while(is_white_space(*prog_s) && (prog_s < prog_e))
+                        //     {
+                        //         prog_s++;
+                        //     }
+                        //     if(prog_s >= prog_e)
+                        //     {
+                        //         TRACE();
+                        //         return RETVAL_SYNTAX;
+                        //     }
+                        //     if(*prog_s=='{')
+                        //     {
+                        //         int tmp_brk = 1;
+                        //         while((prog_s<prog_e) && (tmp_brk>0))
+                        //         {
+                        //             prog_s++;
+                        //             if(*prog_s=='{')
+                        //             {
+                        //                 tmp_brk++;
+                        //             }
+                        //             else if(*prog_s=='}')
+                        //             {
+                        //                 tmp_brk--;
+                        //             }
+                        //         }
+                        //         prog_s++;
+                        //         if(prog_s >= prog_e)
+                        //         {
+                        //             TRACE();
+                        //             return RETVAL_SYNTAX;
+                        //         }
+                        //     }
+                        //     else
+                        //     {
+                        //         while((*prog_s != ';') && (prog_s < prog_e))
+                        //         {
+                        //             prog_s++;
+                        //         }
+                        //         if(prog_s >= prog_e)
+                        //         {
+                        //             TRACE();
+                        //             return RETVAL_SYNTAX;
+                        //         }
+                        //     }
+                        // }
+                        // else
+                        // {
+                        //     condition = CONDITION_TRUE;
+                            // push(&run_step_st, run_step);
+                            // push(&cond_st, condition);
+                            // push(&brk_st, bracket);
+                        // }
+                        prev_state = state;
                         state = STATEMENT_INIT;
-                        prog_s--;
+                        // prog_s++;
+                        // TRACESTR(cp_s);TRACESTR(prog_s);
                     break;
                 }
             break;
@@ -880,104 +920,127 @@ int run(char *prog, int size)
             case STATEMENT_ELSE:
                 prog_s = prog_s + sizeof("else") - 1;
                 TRACESTR(prog_s);
-                if(condition == CONDITION_INIT || prog_s>=prog_e )
+                if(get_size(&cond_st)<1 || prog_s >= prog_e)
                 {
-                    TRACEINT(condition);HR;
+                    TRACE();
                     return RETVAL_SYNTAX;
                 }
-                if(condition == CONDITION_TRUE)
+                if(!by_pass)
                 {
-                    while(is_white_space(*prog_s) && (prog_s < prog_e))
-                    {
-                        prog_s++;
-                    }
-                    if(prog_s >= prog_e)
+                    if(condition == CONDITION_INIT)
                     {
                         TRACE();
                         return RETVAL_SYNTAX;
                     }
-                    if(*prog_s=='{')
+                    if(condition == CONDITION_TRUE)
                     {
-                        int tmp_brk = 1;
-                        while((prog_s<prog_e) && (tmp_brk>0))
-                        {
-                            prog_s++;
-                            if(*prog_s=='{')
-                            {
-                                tmp_brk++;
-                            }
-                            else if(*prog_s=='}')
-                            {
-                                tmp_brk--;
-                            }
-                        }
-                        prog_s++;
-                        if(prog_s >= prog_e)
-                        {
-                            TRACE();
-                            return RETVAL_SYNTAX;
-                        }
+                        by_pass = 1;
+                        // while(is_white_space(*prog_s) && (prog_s < prog_e))
+                        // {
+                        //     prog_s++;
+                        // }
+                        // if(prog_s >= prog_e)
+                        // {
+                        //     TRACE();
+                        //     return RETVAL_SYNTAX;
+                        // }
+                        // if(*prog_s=='{')
+                        // {
+                        //     int tmp_brk = 1;
+                        //     while((prog_s<prog_e) && (tmp_brk>0))
+                        //     {
+                        //         prog_s++;
+                        //         if(*prog_s=='{')
+                        //         {
+                        //             tmp_brk++;
+                        //         }
+                        //         else if(*prog_s=='}')
+                        //         {
+                        //             tmp_brk--;
+                        //         }
+                        //     }
+                        //     prog_s++;
+                        //     if(prog_s >= prog_e)
+                        //     {
+                        //         TRACE();
+                        //         return RETVAL_SYNTAX;
+                        //     }
+                        // }
+                        // else
+                        // {
+                        //     while((*prog_s != ';') && (prog_s < prog_e))
+                        //     {
+                        //         prog_s++;
+                        //     }
+                        //     if(prog_s >= prog_e)
+                        //     {
+                        //         TRACE();
+                        //         return RETVAL_SYNTAX;
+                        //     }
+                        // }
                     }
                     else
                     {
-                        while((*prog_s != ';') && (prog_s < prog_e))
-                        {
-                            prog_s++;
-                        }
-                        if(prog_s >= prog_e)
-                        {
-                            TRACE();
-                            return RETVAL_SYNTAX;
-                        }
+                        by_pass = 0;
+                        // if(push(&cond_st, condition) != RETVAL_OK)
+                        // {
+                        //     return RETVAL_SYNTAX;
+                        // }
+                        // push(&run_step_st, run_step);
+                        // push(&brk_st, bracket);
                     }
                 }
-                if(pop(&run_step_st, &run_step) != RETVAL_OK)
-                {
-                    run_step = RUN_STEP_INIT;
-                }
-                if(pop(&brk_st, &bracket) != RETVAL_OK)
-                {
-                    bracket = BRACKET_INIT;
-                }
-                if(pop(&cond_st, &condition) != RETVAL_OK)
-                {
-                    condition = CONDITION_INIT;
-                }
+
+                prev_state = state;
                 state = STATEMENT_INIT;
             break;
 
             case STATEMENT_CONTINUE:
+                state = STATEMENT_INIT;
             break;
 
             case STATEMENT_BREAK:
+                state = STATEMENT_INIT;
+            break;
+
+            case STATEMENT_END_STM:
+                // prev_state = state;
+                state = STATEMENT_INIT;
             break;
 
             case STATEMENT_OPEN_BRK:
                 in_brk++;
+                // prev_state = state;
                 state = STATEMENT_INIT;
-                bracket = BRACKET_OPEN;
-            break;
-
-            case STATEMENT_END_STM:
-                state = STATEMENT_INIT;
+                // bracket = BRACKET_OPEN;
+                if(pop(&brk_st, NULL) != RETVAL_OK)
+                {
+                    return RETVAL_SYNTAX;
+                }
+                if(push(&brk_st, BRACKET_OPEN) != RETVAL_OK)
+                {
+                    return RETVAL_SYNTAX;
+                }
             break;
 
             case STATEMENT_CLOSE_BRK:
-                in_brk--;
-                state = STATEMENT_INIT;
-                if(pop(&run_step_st, &run_step) != RETVAL_OK)
+                // if(pop(&run_step_st, &run_step) != RETVAL_OK)
+                // {
+                //     run_step = RUN_STEP_INIT;
+                // }
+                if(pop(&brk_st, NULL) != RETVAL_OK)
                 {
-                    run_step = RUN_STEP_INIT;
-                }
-                if(pop(&brk_st, &bracket) != RETVAL_OK)
-                {
-                    bracket = BRACKET_INIT;
+                    return RETVAL_SYNTAX;
                 }
                 if(pop(&cond_st, &condition) != RETVAL_OK)
                 {
-                    TRACE();HR;
-                    condition = CONDITION_INIT;
+                    TRACE();
+                    return RETVAL_SYNTAX;
                 }
+                in_brk--;
+                prev_state = state;
+                state = STATEMENT_INIT;
+                by_pass = 0;
             break;
 
             case STATEMENT_ERROR:
@@ -990,26 +1053,46 @@ int run(char *prog, int size)
                 cp_s = prog_s;
                 while((*prog_s != ';') && (prog_s < prog_e))
                 {
-                    while((*prog_s != ',') && (*prog_s != ';') && (prog_s < prog_e))
+                    if(!by_pass)
+                    {
+                        while((*prog_s != ',') && (*prog_s != ';') && (prog_s < prog_e))
+                        {
+                            prog_s++;
+                        }
+                        if(statement_execution(cp_s, prog_s, NULL) != RETVAL_OK)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                        if(prog_s < prog_e)
+                        {
+                            cp_s = prog_s+1;
+                        }
+                    }
+                    else
                     {
                         prog_s++;
                     }
-                    if(statement_executino(cp_s, prog_s, NULL) != RETVAL_OK)
+                }
+
+                // if(prev_state == STATEMENT_IF)
+                // {
+                //     bracket = BRACKET_CLOSE;
+                // }
+                if(get_top(&brk_st) == BRACKET_INIT && get_top(&cond_st) != CONDITION_INIT)
+                {
+                    if(pop(&brk_st, NULL) != RETVAL_OK)
+                    {
+                        return RETVAL_SYNTAX;
+                    }
+                    if(pop(&cond_st, &condition) != RETVAL_OK)
                     {
                         TRACE();
                         return RETVAL_SYNTAX;
                     }
-                    if(prog_s < prog_e)
-                    {
-                        cp_s = prog_s+1;
-                    }
+                    by_pass = 0;
                 }
-
-                if((bracket != BRACKET_OPEN) && (run_step != RUN_STEP_INIT))
-                {
-                    bracket = BRACKET_CLOSE;
-                }
-
+                prev_state = state;
                 state = STATEMENT_INIT;
             break;
         }
@@ -1022,7 +1105,7 @@ int run(char *prog, int size)
     return RETVAL_OK;
 }
 
-int statement_executino(char infix_s[], char infix_e[], int *rs)
+int statement_execution(char infix_s[], char infix_e[], int *rs)
 {
     char *symbol, *sym_s, *sym_e;
     int ope;
@@ -1110,7 +1193,7 @@ int statement_executino(char infix_s[], char infix_e[], int *rs)
                                 while(*cp_s++ != '(');
                                 cp_tmp = cp_s;
                                 while(*cp_s++ != ')');
-                                statement_executino(cp_tmp, cp_s - 1, &arg);
+                                statement_execution(cp_tmp, cp_s - 1, &arg);
                                 val = (*f->func)(arg);
                                 cp_s++;
                             }
