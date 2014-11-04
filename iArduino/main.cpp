@@ -208,9 +208,9 @@ int main()
     char expr[] = "1 + ()2";
     // char prog[] = "for(i=0; i<10; i++){if(i<2) continue; print(i);}";
     // char prog[] = "i=10,print(i),i=100,print(i); print(1^3)";
-    char prog[] = "if(1) if(0) print(1); else print(2); else if(1) print(3); else print(4); ";
-    // char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); ";
-    // char prog[] = "if(0) print(0xAA); else print(0xFF);";
+    // char prog[] = "if(1) if(0) print(1); else print(2); else if(1) print(3); else print(4); ";
+    char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); ";
+    // char prog[] = "if(1) print(0xAA); else print(0xFF);";
     char *expr_e = expr + sizeof(expr);
     int val;
     // test1();
@@ -879,8 +879,10 @@ int run(char *prog, int size)
 
                 // TRACEINT(condition); TRACEINT(level_crr); TRACEINT(level_next);HR;HR;
                 // print_stack(&cond_tmp_st);TRACE();
+
                 if(level_crr >= level_by_pass)
                 {
+                    TRACEINT(level_crr); TRACEINT(level_by_pass); HR;
                     by_pass = prev_by_pass;
                 }
                 // while(level_crr>level_by_pass && get_size(&brk_tmp_st)>0)
@@ -947,17 +949,24 @@ int run(char *prog, int size)
             break;
 
             case STATEMENT_CLOSE_BRK:
-                if(pop(&brk_st, NULL) != RETVAL_OK)
+                if(prev_state == STATEMENT_ELSE)
                 {
-                    TRACE();
-                    return RETVAL_SYNTAX;
+                    if(pop(&brk_st, NULL) != RETVAL_OK)
+                    {
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    }
+                    if(pop(&cond_st, &condition) != RETVAL_OK)
+                    {
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    }
                 }
-                if(pop(&cond_st, &condition) != RETVAL_OK)
-                {
-                    TRACE();
-                    return RETVAL_SYNTAX;
-                }
-                // level_next = level_crr;
+
+                level_next = level_crr;
+                memset(&cond_tmp_st, 0, sizeof(int_stack_t));
+                memset(&brk_tmp_st, 0, sizeof(int_stack_t));
+                memset(&runst_tmp_st, 0, sizeof(int_stack_t));
                 while(get_size(&brk_st)>0 && get_top(&brk_st)!=BRACKET_OPEN)
                 {
                     pop(&brk_st, &bracket);
@@ -965,13 +974,13 @@ int run(char *prog, int size)
                     pop(&cond_st, &condition);
                     push(&cond_tmp_st, condition);
                     prev_by_pass = by_pass;
-                    // level_next--;
+                    level_next--;
                 }
                 by_pass = 0;
+                level_crr--;
                 in_brk--;
                 prev_state = state;
                 state = STATEMENT_INIT;
-                level_crr--;
             break;
 
             case STATEMENT_ERROR:
