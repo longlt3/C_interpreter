@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// #define DEBUG
+#define DEBUG
 #ifdef DEBUG
 #define TRACE(x)              printf("\n%s : %d\r\n",__FUNCTION__,__LINE__)
 #define TRACEINT(x)           printf("\n%s : %d : %d\r\n",__FUNCTION__,__LINE__,x)
