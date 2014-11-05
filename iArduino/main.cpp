@@ -213,9 +213,10 @@ int main()
     char expr[] = "1 + ()2";
     // char prog[] = "for(i=0; i<10; i++){if(i<2) continue; print(i);}";
     // char prog[] = "i=10,print(i),i=100,print(i); print(1^3)";
-    char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100); ";
+    // char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100); ";
     // char prog[] = "if(1) if(0) if(0) print(1); else print(2); else print(3); else if(0) print(4); else print(5); ";
-    // char prog[] = "if(1) if(0) print(1); else { if(0) {print(3);} else {print(4);} }";
+    // char prog[] = "if(1) if(0) print(1); else { if(1) {print(3);} else {print(4);} }";
+    char prog[] = "if(0) if(1) { print(1); } print(0xFF);";
     // char prog[] = "if(1) { print(0xAA); } else { print(0xFF); }";
     // char prog[] = "while(i<10); { print(i); i=i-1; }";
     char *expr_e = expr + sizeof(expr);
@@ -1071,7 +1072,7 @@ int run(char *prog, int size)
 
             case STATEMENT_OPEN_BRK:
                 in_brk++;
-                // prev_state = state;
+                prev_state = state;
                 state = STATEMENT_INIT;
                 push_int(&brk_st, level_crr);
                 // pop_int(&brk_st, NULL);
@@ -1093,8 +1094,12 @@ int run(char *prog, int size)
                 // push_int(&cond_tmp_st, condition);
                 // level_next--;
                 level_crr--;
+                // if(prev_state == STATEMENT_ELSE)
+                // {
+                //     level_next = get_top(&brk_st);
+                // }
                 in_brk--;
-                // prev_state = state;
+                prev_state = state;
                 state = STATEMENT_INIT;
             break;
 
@@ -1160,8 +1165,8 @@ int run(char *prog, int size)
                     // {
                     //     level_crr--;
                     // }
-                    prev_state = state;
                 }
+                prev_state = state;
                 state = STATEMENT_INIT;
             break;
         }
