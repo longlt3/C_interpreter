@@ -36,6 +36,9 @@ enum RUN_STEP
     RUN_STEP_RUN,
     RUN_STEP_NOT_RUN,
     RUN_STEP_IF,
+    RUN_STEP_1ST,
+    RUN_STEP_2ND,
+    RUN_STEP_3RD,
 };
 
 enum STATEMENT
@@ -127,6 +130,12 @@ typedef struct _int_stack_t
     int elem[MAX];
     int top;
 } int_stack_t;
+
+typedef struct _ptr_stack_t
+{
+    char *elem[MAX];
+    int top;
+} ptr_stack_t;
 
 struct Function1 {
      char *name;
