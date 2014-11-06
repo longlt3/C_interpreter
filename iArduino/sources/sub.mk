@@ -1,30 +1,41 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 OBJS += \
-out/main_cpp_.o \
-out/test_cpp_.o \
+out/main_c_.o \
+out/resource_c_.o \
+out/test_c_.o \
 
 DEPS += \
-out/main_cpp_.d \
-out/test_cpp_.d \
+out/main_c_.d \
+out/resource_c_.d \
+out/test_c_.d \
 
 SRCS += \
-main.cpp \
-test.cpp \
+main.c \
+resource.c \
+test.c \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-out/main_cpp_.o: ./main.cpp 
+out/main_c_.o: ./main.c 
 	@/bin/echo -e 'Building target #1: '$(COLOR_GRN)'$<'$(COLOR_WHE)
 	@/bin/echo '--------------------------------------'
-	"$(cppBuild)" -MMD -MP -MF"$(@:%.o=%.d)" @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) "$<" @"$(MakeSrcDirPath)/main_cpp_.args" @"$(MakeSrcDirPath)/sub.args" @"$(MakeResDirPath)/common.args" $(LDFLAGS) $(LIBFLAGS) -o "$@"
+	"$(cBuild)" -MMD -MP -MF"$(@:%.o=%.d)" @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) "$<" @"$(MakeSrcDirPath)/main_c_.args" @"$(MakeSrcDirPath)/sub.args" @"$(MakeResDirPath)/common.args" $(LDFLAGS) $(LIBFLAGS) -o "$@"
 	@/bin/echo '======================================'
 	@/bin/echo -e ''$(COLOR_BLE)'Finished building: $@'$(COLOR_WHE)''
 	@/bin/echo ' '
 
-out/test_cpp_.o: ./test.cpp 
+out/resource_c_.o: ./resource.c 
 	@/bin/echo -e 'Building target #2: '$(COLOR_GRN)'$<'$(COLOR_WHE)
 	@/bin/echo '--------------------------------------'
-	"$(cppBuild)" -MMD -MP -MF"$(@:%.o=%.d)" @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) "$<" @"$(MakeSrcDirPath)/test_cpp_.args" @"$(MakeSrcDirPath)/sub.args" @"$(MakeResDirPath)/common.args" $(LDFLAGS) $(LIBFLAGS) -o "$@"
+	"$(cBuild)" -MMD -MP -MF"$(@:%.o=%.d)" @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) "$<" @"$(MakeSrcDirPath)/resource_c_.args" @"$(MakeSrcDirPath)/sub.args" @"$(MakeResDirPath)/common.args" $(LDFLAGS) $(LIBFLAGS) -o "$@"
+	@/bin/echo '======================================'
+	@/bin/echo -e ''$(COLOR_BLE)'Finished building: $@'$(COLOR_WHE)''
+	@/bin/echo ' '
+
+out/test_c_.o: ./test.c 
+	@/bin/echo -e 'Building target #3: '$(COLOR_GRN)'$<'$(COLOR_WHE)
+	@/bin/echo '--------------------------------------'
+	"$(cBuild)" -MMD -MP -MF"$(@:%.o=%.d)" @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) "$<" @"$(MakeSrcDirPath)/test_c_.args" @"$(MakeSrcDirPath)/sub.args" @"$(MakeResDirPath)/common.args" $(LDFLAGS) $(LIBFLAGS) -o "$@"
 	@/bin/echo '======================================'
 	@/bin/echo -e ''$(COLOR_BLE)'Finished building: $@'$(COLOR_WHE)''
 	@/bin/echo ' '

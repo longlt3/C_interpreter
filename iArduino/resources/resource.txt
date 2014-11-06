@@ -4,10 +4,10 @@ ___projDirPath___
 /cygdrive/d/workspace/C_interpreter/iArduino
 ;
 ___sourcesext___
-cpp
+c
 ;
 ___buildlist___
-g++
+gcc
 ;
 ___makefileargs___
 ;

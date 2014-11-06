@@ -5,7 +5,7 @@
 
 #define ASSERT_RETURN(retval)   if(retval!=RETVAL_OK) { printf("FAILED\n"); return; }
 
-extern int statement_execution(char infix_s[], char infix_e[], int *rs);
+// extern int statement_execution(char infix_s[], char infix_e[], int *rs);
 
 void test_statement_execution_error_syntax(char *ch, int size)
 {

@@ -15,7 +15,6 @@
 #define TRACEINT(x)
 #define TRACESTR(x)
 #define TRACEADD(x)
-#define HR
 #endif
 
 #define HR                    printf("------------------------------------------\n")
@@ -63,25 +62,11 @@ enum BRACKET
     BRACKET_CLOSE,
 };
 
-enum RUN_STATEMENT
-{
-    RUN_STATEMENT_INIT,
-    RUN_STATEMENT_CONDITION,
-    RUN_STATEMENT_LAST,
-};
-
 enum CONDITION
 {
     CONDITION_INIT,
     CONDITION_TRUE,
     CONDITION_FALSE,
-};
-
-enum PUSH
-{
-    PUSH_VARIABLE,
-    PUSH_OPERATOR,
-    PUSH_ERR,
 };
 
 enum SYMBOL_TYPE
@@ -90,6 +75,13 @@ enum SYMBOL_TYPE
     SYM_VARIABLE,
     SYM_FUNCTION,
     SYM_ERROR,
+};
+
+enum PUSH
+{
+    PUSH_VARIABLE,
+    PUSH_OPERATOR,
+    PUSH_ERR,
 };
 
 enum OPERATOR
@@ -116,7 +108,7 @@ enum OPERATOR
     OPE_DIV,                // /
     OPE_MOD,                // %
     OPE_DIF_Z,              // !
-    OPE_EQU,             // =
+    OPE_EQU,                // =
     OPE_D_ADD,              // ++
     OPE_D_SUB,              // --
 
@@ -154,5 +146,55 @@ struct Function3 {
      int   len;
      int (*func)(int, int, int);
 };
+
+int is_white_space(char ch);
+
+int is_empty(int_stack_t *st);
+
+int size_int(int_stack_t *st);
+
+int size_ptr(ptr_stack_t *st);
+
+int top_int(int_stack_t *st);
+
+char *top_ptr(ptr_stack_t *st);
+
+int pop_int(int_stack_t *st, int *elem);
+
+int pop_ptr(ptr_stack_t *st, char **elem);
+
+int push_int(int_stack_t *st, int elem);
+
+int push_ptr(ptr_stack_t *st, char *elem);
+
+int prio_operator(int ope);
+
+int calculate_operator(int l_operant, int r_operant, int ope);
+
+int walk_through_parenthesis(char **start, char *end);
+
+int get_primitive_val(char ** sym_s, char *const sym_e, int *val);
+
+int is_operator(char ** symbol);
+
+int run(char *prog, int size);
+
+int statement_execution(char infix_s[], char infix_e[], int *rs);
+
+int check_statement(char *statement);
+
+int check_symbol(char *sym_s);
+
+void print_ret_val(int rs);
+
+void print_symbol(char *symbol);
+
+void print_ope(int ope);
+
+void print_stack(int_stack_t *st);
+
+void print_ope_stack(int_stack_t *st);
+
+
 
 #endif

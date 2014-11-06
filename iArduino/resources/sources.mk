@@ -20,7 +20,7 @@ PROGRAM := program.exe
 #clean command: 
 RM := rm -f
 
-#GNU build for cpp: 
-cppBuild := $(GNUMakeInstallDirPath)g++
+#GNU build for c: 
+cBuild := $(GNUMakeInstallDirPath)gcc
 #Program build command: 
-progBuild := $(cppBuild)
+progBuild := $(cBuild)

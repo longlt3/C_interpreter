@@ -14,7 +14,7 @@ COLOR_YEW="\x1b[33;01m"
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJS) $(USER_OBJS) $(LINKER_FILES)
-	@/bin/echo -e 'Building target #3: '$(COLOR_GRN)'$@'$(COLOR_WHE)
+	@/bin/echo -e 'Building target #4: '$(COLOR_GRN)'$@'$(COLOR_WHE)
 	@/bin/echo '--------------------------------------'
 	$(progBuild) @"$(MakeResDirPath)/includes.args" $(CFLAGS) $(INCFLAGS) @"$(MakeResDirPath)/userOBJS.args" @"$(MakeResDirPath)/OBJS.args" @"$(MakeResDirPath)/userLIBS.args" $(LIBFLAGS) $(LDFLAGS) @"$(MakeResDirPath)/makefile.args" -o "$@"
 	@/bin/echo '======================================'
