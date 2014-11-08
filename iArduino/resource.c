@@ -1,87 +1,95 @@
 #include "resource.h"
 
+char g_test[DBG_STR_MAX];
+int g_test_size = 0;
+
+char g_test_2[DBG_STR_MAX];
+int g_test_size_2 = 0;
+
 #ifdef DEBUG
-char *g_dgb_statement[] =
+char * g_dbg_str[DBG_MAX][DBG_STR_MAX] =
 {
-    "STATEMENT_INIT",
-    "STATEMENT_FOR",
-    "STATEMENT_WHILE",
-    "STATEMENT_IF",
-    "STATEMENT_ELSE",
-    "STATEMENT_CONTINUE",
-    "STATEMENT_BREAK",
-    "STATEMENT_END_STM",
-    "STATEMENT_OPEN_BRK",
-    "STATEMENT_CLOSE_BRK",
-    "STATEMENT_ERROR",
-};
-
-char *g_dgb_ret_val[] =
-{
-    "RETVAL_OK",
-    "RETVAL_SYNTAX",
-    "RETVAL_NULL",
-    "RETVAL_EMPTY",
-    "RETVAL_FULL",
-    "RETVAL_NOT_SUPPORTED",
-};
-
-char *g_dbg_push[] =
-{
-    "PUSH_VARIABLE",
-    "PUSH_OPERATOR",
-    "PUSH_ERR",
-};
-
-char *g_dgb_operator[] =
-{
-    "OPE_DEFAULT",
-    "OPE_OPEN_PAREN",         // (
-    "OPE_CLOSE_PAREN",        // )
-    "OPE_D_EQU",              // ==
-    "OPE_DIF",                // !=
-    "OPE_D_OR",               // ||
-    "OPE_D_AND",              // &&
-    "OPE_LES_TH",             // <
-    "OPE_GRE_TH",             // >
-    "OPE_LES_EQU",            // <=
-    "OPE_GRE_EQU",            // >=
-    "OPE_LEF_SH",             // <<
-    "OPE_RIG_SH",             // >>
-    "OPE_XOR",                // ^
-    "OPE_AND",                // &
-    "OPE_OR",                 // |
-    "OPE_ADD",                // +
-    "OPE_SUB",                // -
-    "OPE_MUL",                // *
-    "OPE_DIV",                // /
-    "OPE_MOD",                // %
-    "OPE_DIF_Z",              // !
-    "OPE_EQU",                // =
-    "OPE_D_ADD",              // ++
-    "OPE_D_SUB",              // --
-    "OPE_ERR",
-};
-
-char *g_dbg_condition[] =
-{
-    "CONDITION_INIT",
-    "CONDITION_TRUE",
-    "CONDITION_FALSE",
+    {
+        "STATEMENT_INIT",
+        "STATEMENT_FOR",
+        "STATEMENT_WHILE",
+        "STATEMENT_IF",
+        "STATEMENT_ELSE",
+        "STATEMENT_CONTINUE",
+        "STATEMENT_BREAK",
+        "STATEMENT_SEMICOLON",
+        "STATEMENT_COMMA",
+        "STATEMENT_OPEN_BRK",
+        "STATEMENT_CLOSE_BRK",
+        "STATEMENT_EXECUTION",
+        "STATEMENT_ERROR",
+    },
+    {
+        "RETVAL_OK",
+        "RETVAL_SYNTAX",
+        "RETVAL_NULL",
+        "RETVAL_EMPTY",
+        "RETVAL_FULL",
+        "RETVAL_NOT_SUPPORTED",
+    },
+    {
+        "PUSH_VARIABLE",
+        "PUSH_OPERATOR",
+        "PUSH_ERR",
+    },
+    {
+        "OPE_DEFAULT",
+        "OPE_OPEN_PAREN",         // (
+        "OPE_CLOSE_PAREN",        // )
+        "OPE_D_EQU",              // ==
+        "OPE_DIF",                // !=
+        "OPE_D_OR",               // ||
+        "OPE_D_AND",              // &&
+        "OPE_LES_TH",             // <
+        "OPE_GRE_TH",             // >
+        "OPE_LES_EQU",            // <=
+        "OPE_GRE_EQU",            // >=
+        "OPE_LEF_SH",             // <<
+        "OPE_RIG_SH",             // >>
+        "OPE_XOR",                // ^
+        "OPE_AND",                // &
+        "OPE_OR",                 // |
+        "OPE_ADD",                // +
+        "OPE_SUB",                // -
+        "OPE_MUL",                // *
+        "OPE_DIV",                // /
+        "OPE_MOD",                // %
+        "OPE_DIF_Z",              // !
+        "OPE_EQU",                // =
+        "OPE_D_ADD",              // ++
+        "OPE_D_SUB",              // --
+        "OPE_ERR",
+    },
+    {
+        "CONDITION_INIT",
+        "CONDITION_TRUE",
+        "CONDITION_FALSE",
+    },
 };
 #else
-char *g_dgb_statement[] = {0};
-char *g_dgb_ret_val[] = {0};
-char *g_dbg_push[] = {0};
-char *g_dgb_operator[] = {0};
-char *g_dbg_condition[] = {0};
+char * g_dbg_str[DBG_MAX][DBG_STR_MAX] = {0};
 #endif
-
-
 int print(int val)
 {
+#ifdef TEST
+    g_test_size += sprintf(g_test + g_test_size, "%d ", val);
+#endif;
     printf("%d\n", val);
     return val;
+}
+
+int print_2(int val)
+{
+#ifdef TEST
+    g_test_size_2 += sprintf(g_test_2 + g_test_size_2, "%d ", val);
+#else
+    return print(val);
+#endif;
 }
 
 const struct Function1 func1[] = {
@@ -101,12 +109,22 @@ const struct Function3 func3[] = {
 
 int variables[26] = {0};
 
-void print_stack(int_stack_t *st)
+void print_stack_int(int_stack_t *st)
 {
     int i;
     for(i=0; i<st->top; i++)
     {
         printf("%d ", st->elem[i]);
+    }
+    printf("\n");
+}
+
+void print_stack_ptr(ptr_stack_t *st)
+{
+    int i;
+    for(i=0; i<st->top; i++)
+    {
+        printf("%d ", (uint32_t)st->elem[i]);
     }
     printf("\n");
 }
@@ -582,7 +600,7 @@ int check_statement(char *statement)
 {
     if(!statement)
     {
-        return STATEMENT_ERROR;
+        return STATEMENT_EXECUTION;
     }
     if(!strncmp(statement, "for", sizeof("for") - 1))
     {
@@ -626,15 +644,15 @@ int check_statement(char *statement)
 
     if(*statement == ';')
     {
-        return STATEMENT_END_STM;
+        return STATEMENT_SEMICOLON;
     }
 
     if(*statement == ',')
     {
-        return STATEMENT_END_STM;
+        return STATEMENT_COMMA;
     }
 
-    return STATEMENT_ERROR;
+    return STATEMENT_EXECUTION;
 }
 
 int check_symbol(char *symbol)
@@ -680,12 +698,13 @@ int run(char *prog, int size)
 {
     char *prog_s, *prog_e, *cond_s_ptr, *cond_e_ptr, *sub_s_ptr, *sub_e_ptr;
     char *cp_s, *cp_e;
-    int state, run_step, val, in_brk, prev_state, condition, level_by_pass, level_crr, level_next;
-    int_stack_t cond_st, brk_st, state_st;
+    int state, run_step, val, prev_state, syntax_state, condition, level_by_pass, level_crr, level_next;
+    int_stack_t cond_st, brk_st, state_st, loop_level_st;
     ptr_stack_t cond_s_ptr_st, cond_e_ptr_st, sub_s_ptr_st;
 
     state = STATEMENT_INIT;
     prev_state = state;
+    syntax_state = state;
     run_step = RUN_STEP_INIT;
     prog_s = prog;
     prog_e = prog_s + size;
@@ -700,12 +719,13 @@ int run(char *prog, int size)
     memset(&cond_st, 0, sizeof(int_stack_t));
     memset(&brk_st, 0, sizeof(int_stack_t));
     memset(&state_st, 0, sizeof(int_stack_t));
+    memset(&loop_level_st, 0, sizeof(int_stack_t));
 
     memset(&cond_s_ptr_st, 0, sizeof(ptr_stack_t));
     memset(&cond_e_ptr_st, 0, sizeof(ptr_stack_t));
     memset(&sub_s_ptr_st, 0, sizeof(ptr_stack_t));
 
-    for(; prog_s < prog_e; )
+    for(; prog_s < prog_e;)
     {
         if(is_white_space(*prog_s))
         {
@@ -723,9 +743,65 @@ int run(char *prog, int size)
         switch(state)
         {
             case STATEMENT_FOR:
+                syntax_state = STATEMENT_FOR;
+                // switch(run_step)
+                // {
+                //     case RUN_STEP_INIT:
+                //         run_step = RUN_STEP_2ND;
+                //         if(!cond_s_ptr)
+                //         {
+                //             prog_s = prog_s + sizeof("while") - 1;
+                //             cp_s = prog_s;
+                //             if(walk_through_parenthesis(&prog_s, prog_e) != RETVAL_OK)
+                //             {
+                //                 TRACE();
+                //                 return RETVAL_SYNTAX;
+                //             }
+                //             cond_s_ptr = cp_s;
+                //             cond_e_ptr = prog_s;
+                //             sub_s_ptr = prog_s;
+                //         }
+                //     break;
+
+                //     case RUN_STEP_2ND:
+                //         if (size_int(&brk_st))
+                //         {
+                //             level_crr = level_next;
+                //         }
+                //         level_next++;
+                //         if(level_by_pass > (level_next - 1))
+                //         {
+                //             if(statement_execution(cond_s_ptr, cond_e_ptr, &val) != RETVAL_OK)
+                //             {
+                //                 TRACE();
+                //                 return RETVAL_SYNTAX;
+                //             }
+                //             if(!val)
+                //             {
+                //                 condition = CONDITION_FALSE;
+                //                 level_by_pass = level_next;
+                //             }
+                //             else
+                //             {
+                //                 condition = CONDITION_TRUE;
+                //                 level_by_pass = MAX;
+                //                 push_int(&state_st, state);
+                //                 push_int(&loop_level_st, level_crr);
+                //                 push_ptr(&cond_s_ptr_st, cond_s_ptr);
+                //                 push_ptr(&cond_e_ptr_st, cond_e_ptr);
+                //                 push_ptr(&sub_s_ptr_st, sub_s_ptr);
+                //             }
+                //             TRACESTR(g_dbg_str[DBG_CONDITION][condition]);
+                //         }
+                //         run_step = RUN_STEP_INIT;
+                //         state = STATEMENT_INIT;
+                //     break;
+                // }
+                prev_state = STATEMENT_FOR;
             break;
 
             case STATEMENT_WHILE:
+                syntax_state = STATEMENT_WHILE;
                 switch(run_step)
                 {
                     case RUN_STEP_INIT:
@@ -742,11 +818,15 @@ int run(char *prog, int size)
                             cond_s_ptr = cp_s;
                             cond_e_ptr = prog_s;
                             sub_s_ptr = prog_s;
-                            TRACESTR(cond_s_ptr);TRACESTR(cond_e_ptr);TRACESTR(sub_s_ptr);
                         }
                     break;
 
                     case RUN_STEP_2ND:
+                        if (size_int(&brk_st))
+                        {
+                            TRACESTRINT("brk_st",top_int(&brk_st));HR;HR;
+                            level_crr = level_next;
+                        }
                         level_next++;
                         if(level_by_pass > (level_next - 1))
                         {
@@ -755,7 +835,7 @@ int run(char *prog, int size)
                                 TRACE();
                                 return RETVAL_SYNTAX;
                             }
-                           if(!val)
+                            if(!val)
                             {
                                 condition = CONDITION_FALSE;
                                 level_by_pass = level_next;
@@ -765,12 +845,15 @@ int run(char *prog, int size)
                                 condition = CONDITION_TRUE;
                                 level_by_pass = MAX;
                                 push_int(&state_st, state);
+                                push_int(&loop_level_st, level_crr);
                                 push_ptr(&cond_s_ptr_st, cond_s_ptr);
                                 push_ptr(&cond_e_ptr_st, cond_e_ptr);
                                 push_ptr(&sub_s_ptr_st, sub_s_ptr);
                             }
-                            TRACESTR(g_dbg_condition[condition]);
                         }
+                        cond_s_ptr = 0;
+                        cond_e_ptr = 0;
+                        sub_s_ptr = 0;
                         run_step = RUN_STEP_INIT;
                         state = STATEMENT_INIT;
                     break;
@@ -779,12 +862,12 @@ int run(char *prog, int size)
             break;
 
             case STATEMENT_IF:
+                syntax_state = STATEMENT_IF;
                 if (size_int(&brk_st))
                 {
                     level_crr = level_next;
                 }
                 level_next++;
-                run_step = RUN_STEP_IF;
                 prog_s = prog_s + sizeof("if") - 1;
                 if(prog_s >= prog_e)
                 {
@@ -815,14 +898,14 @@ int run(char *prog, int size)
                         level_by_pass = MAX;
                     }
                 }
-                TRACESTR(g_dbg_condition[condition]);
                 prev_state = STATEMENT_IF;
                 state = STATEMENT_INIT;
             break;
 
             case STATEMENT_ELSE: ;
+                TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 int level_tmp = level_next;
-                TRACEINT(level_crr); TRACEINT(level_by_pass); HR;
+                syntax_state = STATEMENT_ELSE;
                 if(condition == CONDITION_INIT)
                 {
                     TRACE();
@@ -852,20 +935,61 @@ int run(char *prog, int size)
             break;
 
             case STATEMENT_CONTINUE:
-                state = STATEMENT_INIT;
+                syntax_state = STATEMENT_CONTINUE;
+                if(level_by_pass <= level_next)
+                {
+                    prog_s = prog_s + sizeof("continue") - 1;
+                    state = STATEMENT_INIT;
+                    break;
+                }
+                if(pop_ptr(&sub_s_ptr_st, &sub_s_ptr) != RETVAL_OK)
+                {
+                    TRACE();
+                    return RETVAL_SYNTAX;
+                }
+                prog_s = sub_s_ptr;
+                pop_ptr(&cond_s_ptr_st, &cond_s_ptr);
+                pop_ptr(&cond_e_ptr_st, &cond_e_ptr);
+                pop_int(&state_st, &state);
+                pop_int(&loop_level_st, &level_next);
+                TRACESTRINT("loop",level_next);
+                TRACE();print_stack_int(&brk_st);HR;
+                level_crr = level_next;
+                while(top_int(&brk_st) < level_crr)
+                {
+                    pop_int(&brk_st, NULL);
+                }
+                if(top_int(&brk_st) == level_crr)
+                {
+                    pop_int(&brk_st, NULL);
+                }
+                TRACE();print_stack_int(&brk_st);HR;
             break;
 
             case STATEMENT_BREAK:
+                syntax_state = STATEMENT_BREAK;
                 state = STATEMENT_INIT;
             break;
 
-            case STATEMENT_END_STM:
+            case STATEMENT_SEMICOLON:
                 state = STATEMENT_INIT;
+                // if(syntax_state != STATEMENT_EXECUTION && syntax_state != STATEMENT_COMMA)
+                // {
+                //     TRACE();
+                //     return RETVAL_SYNTAX;
+                // }
                 if(prev_state == STATEMENT_IF
                     || prev_state == STATEMENT_ELSE
                     || prev_state == STATEMENT_WHILE)
                 {
-                    level_next = top_int(&brk_st);
+                    if(size_int(&brk_st))
+                    {
+                        level_next = top_int(&brk_st) + 1;
+                    }
+                    else
+                    {
+                        level_next = 0;
+                    }
                     level_crr--;
                     if(prev_state == STATEMENT_ELSE)
                     {
@@ -875,19 +999,25 @@ int run(char *prog, int size)
                     {
                         pop_ptr(&cond_s_ptr_st, &cond_s_ptr);
                         pop_ptr(&cond_e_ptr_st, &cond_e_ptr);
-                        if(pop_ptr(&sub_s_ptr_st, &prog_s) == RETVAL_OK)
-                        {
-                            prog_s--;
-                        }
+                        pop_ptr(&sub_s_ptr_st, &sub_s_ptr);
                         pop_int(&state_st, &state);
+                        pop_int(&loop_level_st, &level_next);
+                        prog_s = sub_s_ptr ? (sub_s_ptr - 1) : prog_s;
                     }
                 }
-                prev_state = STATEMENT_END_STM;
+                syntax_state = STATEMENT_SEMICOLON;
+                prev_state = STATEMENT_SEMICOLON;
+                prog_s++;
+            break;
+
+            case STATEMENT_COMMA:
+                syntax_state = STATEMENT_COMMA;
+                state = STATEMENT_INIT;
                 prog_s++;
             break;
 
             case STATEMENT_OPEN_BRK:
-                in_brk++;
+                syntax_state = STATEMENT_OPEN_BRK;
                 prev_state = STATEMENT_OPEN_BRK;
                 state = STATEMENT_INIT;
                 push_int(&brk_st, level_crr);
@@ -895,32 +1025,44 @@ int run(char *prog, int size)
             break;
 
             case STATEMENT_CLOSE_BRK:
-                level_crr = level_next;
+                syntax_state = STATEMENT_CLOSE_BRK;
                 if(pop_int(&brk_st, &level_next) != RETVAL_OK)
                 {
-                    level_next = 0;
+                    TRACE();
+                    RETVAL_SYNTAX;
                 }
-                level_crr--;
-                in_brk--;
+                level_crr = level_next;
                 prev_state = STATEMENT_CLOSE_BRK;
                 state = STATEMENT_INIT;
-                pop_ptr(&cond_s_ptr_st, &cond_s_ptr);
-                pop_ptr(&cond_e_ptr_st, &cond_e_ptr);
-                if(pop_ptr(&sub_s_ptr_st, &prog_s) == RETVAL_OK)
+                if(level_next == top_int(&loop_level_st))
                 {
-                    prog_s--;
+                    pop_ptr(&cond_s_ptr_st, &cond_s_ptr);
+                    pop_ptr(&cond_e_ptr_st, &cond_e_ptr);
+                    pop_ptr(&sub_s_ptr_st, &sub_s_ptr);
+                    pop_int(&state_st, &state);
+                    prog_s = sub_s_ptr ? (sub_s_ptr - 1) : prog_s;
                 }
-                pop_int(&state_st, &state);
                 prog_s++;
+                HR;TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
             break;
 
-            case STATEMENT_ERROR:
+            case STATEMENT_EXECUTION:
+                switch(syntax_state)
+                {
+                    case STATEMENT_EXECUTION:
+                        TRACE();
+                        return RETVAL_SYNTAX;
+                    break;
+
+                    default:
+                    break;
+                }
+                TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 if(prog_s == prog_e - 1)
                 {
                     TRACE();
                     return RETVAL_OK;
                 }
-                TRACEINT(level_crr); TRACEINT(level_next); TRACEINT(level_by_pass);
                 level_crr = level_next;
                 if(level_by_pass > level_crr)
                 {
@@ -950,6 +1092,7 @@ int run(char *prog, int size)
                         prog_s++;
                     }
                 }
+                syntax_state = STATEMENT_EXECUTION;
                 state = STATEMENT_INIT;
             break;
 
@@ -958,11 +1101,7 @@ int run(char *prog, int size)
             break;
         }
     }
-    if(run_step == RUN_STEP_INIT)
-    {
-        TRACE();
-        return RETVAL_SYNTAX;
-    }
+
     return RETVAL_OK;
 }
 

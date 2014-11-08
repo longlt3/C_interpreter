@@ -4,18 +4,34 @@
 #include <stdio.h>
 #include <string.h>
 
+#define TEST
 #define DEBUG
+
 #ifdef DEBUG
 #define TRACE(x)              printf("\n%s : %d\r\n",__FUNCTION__,__LINE__)
 #define TRACEINT(x)           printf("\n%s : %d : %d\r\n",__FUNCTION__,__LINE__,x)
 #define TRACESTR(x)           printf("\n%s : %d : %s\r\n",__FUNCTION__,__LINE__,x)
+#define TRACESTRINT(x,y)      printf("\n%s : %d : %s : %d\r\n",__FUNCTION__,__LINE__,x,y)
 #define TRACEADD(x)           printf("\n%s : %d : %p\r\n",__FUNCTION__,__LINE__,x)
 #else
 #define TRACE(x)
 #define TRACEINT(x)
 #define TRACESTR(x)
+#define TRACESTRINT(x,y)
 #define TRACEADD(x)
 #endif
+
+enum DBG_STR
+{
+    DBG_STATEMENT,
+    DBG_RET_VAL,
+    DBG_PUSH,
+    DBG_OPERATOR,
+    DBG_CONDITION,
+    DBG_MAX,
+};
+
+#define DBG_STR_MAX         256
 
 #define HR                    printf("------------------------------------------\n")
 
@@ -49,9 +65,11 @@ enum STATEMENT
     STATEMENT_ELSE,
     STATEMENT_CONTINUE,
     STATEMENT_BREAK,
-    STATEMENT_END_STM,
+    STATEMENT_SEMICOLON,
+    STATEMENT_COMMA,
     STATEMENT_OPEN_BRK,
     STATEMENT_CLOSE_BRK,
+    STATEMENT_EXECUTION,
     STATEMENT_ERROR,
 };
 
@@ -191,7 +209,9 @@ void print_symbol(char *symbol);
 
 void print_ope(int ope);
 
-void print_stack(int_stack_t *st);
+void print_stack_int(int_stack_t *st);
+
+void print_stack_ptr(ptr_stack_t *st);
 
 void print_ope_stack(int_stack_t *st);
 
