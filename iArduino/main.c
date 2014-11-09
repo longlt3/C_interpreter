@@ -58,10 +58,14 @@ int main()
     // char prog[] = "while((i=i+1)<30) { if(i>10) { print(0xFF); break; }  print(i); } print(i);";
     // while((i=i+1)<30) { if(i>10) { print(0xFF); break; } print(i); } print(i);
 
-    char prog[] = "print(i); while((i=i+1)<30) { j=0; while((j=j+1)<13) { if(j>10) { print(j); break; } print(i); } } print(100);";
-    print(i); while((i=i+1)<30) { j=0; while((j=j+1)<13) { if(j>10) { print(j); break; } print(i); } } print(100);
+    // char prog[] = "for(i=0;i<13;i=i+1) print(i);";
+    // for(i=0;i<13;i=i+1) print(i);
 
+    char prog[] = "print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);";
+    print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);
 
+    // char prog[] = "print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);";
+    // print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);
 
     // test1();
     // print_symbol(expr);

@@ -375,13 +375,15 @@ int walk_through_parenthesis(char **start, char *end)
     return RETVAL_OK;
 }
 
-int get_primitive_val(char ** sym_s, char *const sym_e, int *val)
+int get_primitive_val(char ** sym_s, int size, int *val)
 {
+    char *sym_e;
     char *cp_s;
-    if(!sym_s || !(*sym_s) || !sym_e || !val)
+    if(!sym_s || !(*sym_s) || !size || !val)
     {
         return RETVAL_NULL;
     }
+    sym_e = *sym_s+size;
     char *const cp_e = sym_e;
     cp_s = *sym_s;
     if(*cp_s == '0') // binary or hexadecimal format.
@@ -705,11 +707,15 @@ int check_symbol(char *symbol)
 
 int run(char *prog, int size)
 {
-    char *prog_s, *prog_e, *run1_s_ptr, *run1_e_ptr, *run2_s_ptr, *run2_e_ptr, *run3_s_ptr, *run3_e_ptr, *sub_prog_s_ptr, *sub_prog_e_ptr;
+    char *prog_s, *prog_e, *run1_s_ptr, *run1_e_ptr, *run2_s_ptr, *run3_s_ptr, *run3_e_ptr, *sub_prog_s_ptr, *sub_prog_e_ptr;
     char *cp_s, *cp_e;
     int state, run_step, val, prev_state, syntax_state, condition, level_by_pass, level_crr, level_next;
     int_stack_t cond_st, brk_st, state_st, loop_level_st;
-    ptr_stack_t run1_s_ptr_st, run1_e_ptr_st, run3_s_ptr_st, run3_e_ptr_st, run2_s_ptr_st, run2_e_ptr_st, sub_prog_s_ptr_st;
+    ptr_stack_t run1_s_ptr_st, run1_e_ptr_st, run3_s_ptr_st, run3_e_ptr_st, run2_s_ptr_st, sub_prog_s_ptr_st;
+
+    int run1_size, run2_size, run3_size;
+    int_stack_t run1_size_st, run2_size_st, run3_size_st;
+
 
     state = STATEMENT_INIT;
     prev_state = state;
@@ -717,8 +723,12 @@ int run(char *prog, int size)
     run_step = RUN_STEP_INIT;
     prog_s = prog;
     prog_e = prog_s + size;
+    run1_s_ptr = 0;
+    run1_size = 0;
     run2_s_ptr = 0;
-    run2_e_ptr = 0;
+    run2_size = 0;
+    run3_s_ptr = 0;
+    run3_size = 0;
     sub_prog_s_ptr = 0;
     sub_prog_e_ptr = 0;
     condition = CONDITION_INIT;
@@ -732,10 +742,13 @@ int run(char *prog, int size)
 
     memset(&run1_s_ptr_st, 0, sizeof(ptr_stack_t));
     memset(&run1_e_ptr_st, 0, sizeof(ptr_stack_t));
+
     memset(&run2_s_ptr_st, 0, sizeof(ptr_stack_t));
-    memset(&run2_e_ptr_st, 0, sizeof(ptr_stack_t));
+    memset(&run2_size_st, 0, sizeof(int_stack_t));
+
     memset(&run3_s_ptr_st, 0, sizeof(ptr_stack_t));
     memset(&run3_e_ptr_st, 0, sizeof(ptr_stack_t));
+
     memset(&sub_prog_s_ptr_st, 0, sizeof(ptr_stack_t));
 
     for(; prog_s < prog_e;)
@@ -835,7 +848,7 @@ int run(char *prog, int size)
                                     return RETVAL_SYNTAX;
                                 }
                                 run2_s_ptr = cp_s;
-                                run2_e_ptr = prog_s;
+                                run2_size = prog_s - cp_s;
                                 sub_prog_s_ptr = prog_s;
                             }
                         }
@@ -844,16 +857,40 @@ int run(char *prog, int size)
                             if(!run2_s_ptr)
                             {
                                 prog_s = prog_s + sizeof("for") - 1;
+                                while(*prog_s != '(')
+                                {
+                                    prog_s++;
+                                }
                                 cp_s = prog_s;
                                 if(walk_through_parenthesis(&prog_s, prog_e) != RETVAL_OK)
                                 {
                                     TRACE();
                                     return RETVAL_SYNTAX;
                                 }
+                                cp_s++;
+                                run1_s_ptr = cp_s;
+                                while(*cp_s != ';')
+                                {
+                                    cp_s++;
+                                    run1_size++;
+                                }
+                                cp_s++;
                                 run2_s_ptr = cp_s;
-                                run2_e_ptr = prog_s;
+                                while(*cp_s != ';')
+                                {
+                                    cp_s++;
+                                    run2_size++;
+                                }
+                                cp_s++;
+                                run3_s_ptr = cp_s;
+                                run3_size = prog_s - cp_s - 1;
                                 sub_prog_s_ptr = prog_s;
                                 run_step = RUN_STEP_1ST;
+                                TRACESTR(run1_s_ptr+run1_size);HR;
+                                TRACESTR(run2_s_ptr+run2_size);HR;
+                                TRACESTR(run3_s_ptr+run3_size);HR;
+                                // return 0;
+                                TRACESTR(prog_s);
                             }
                             else
                             {
@@ -863,18 +900,24 @@ int run(char *prog, int size)
                     break;
 
                     case RUN_STEP_1ST:
+                        if(statement_execution(run1_s_ptr, run1_size, NULL) != RETVAL_OK)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
+                        run_step = RUN_STEP_2ND;
                     break;
 
                     case RUN_STEP_2ND:
                         if (size_int(&brk_st))
                         {
-                            TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
+                            // TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                             level_crr = level_next;
                         }
                         level_next++;
                         if(level_by_pass > (level_next - 1))
                         {
-                            if(statement_execution(run2_s_ptr, run2_e_ptr, &val) != RETVAL_OK)
+                            if(statement_execution(run2_s_ptr, run2_size, &val) != RETVAL_OK)
                             {
                                 TRACE();
                                 return RETVAL_SYNTAX;
@@ -891,12 +934,18 @@ int run(char *prog, int size)
                                 push_int(&state_st, state);
                                 push_int(&loop_level_st, level_crr);
                                 push_ptr(&run2_s_ptr_st, run2_s_ptr);
-                                push_ptr(&run2_e_ptr_st, run2_e_ptr);
+                                push_int(&run2_size_st, run2_size);
+                                push_ptr(&run3_s_ptr_st, run3_s_ptr);
+                                push_int(&run3_size_st, run3_size);
                                 push_ptr(&sub_prog_s_ptr_st, sub_prog_s_ptr);
                             }
                         }
+                        run1_s_ptr = 0;
+                        run1_size = 0;
                         run2_s_ptr = 0;
-                        run2_e_ptr = 0;
+                        run2_size = 0;
+                        run3_s_ptr = 0;
+                        run3_size = 0;
                         sub_prog_s_ptr = 0;
                         run_step = RUN_STEP_INIT;
                         state = STATEMENT_INIT;
@@ -905,6 +954,11 @@ int run(char *prog, int size)
 
                     case RUN_STEP_3RD:
                         run_step = RUN_STEP_2ND;
+                        if(statement_execution(run3_s_ptr, run3_size, NULL) != RETVAL_OK)
+                        {
+                            TRACE();
+                            return RETVAL_SYNTAX;
+                        }
                     break;
                 }
                 prev_state = syntax_state;
@@ -932,7 +986,7 @@ int run(char *prog, int size)
                 }
                 if(level_by_pass > (level_next - 1))
                 {
-                    if(statement_execution(cp_s, prog_s, &val) != RETVAL_OK)
+                    if(statement_execution(cp_s, prog_s - cp_s, &val) != RETVAL_OK)
                     {
                         TRACE();
                         return RETVAL_SYNTAX;
@@ -949,7 +1003,7 @@ int run(char *prog, int size)
                     }
                 }
                 TRACESTR(g_dbg_str[DBG_CONDITION][condition]);
-                TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
+                // TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 prev_state = STATEMENT_IF;
                 state = STATEMENT_INIT;
             break;
@@ -1002,7 +1056,9 @@ int run(char *prog, int size)
                 }
                 prog_s = sub_prog_s_ptr;
                 pop_ptr(&run2_s_ptr_st, &run2_s_ptr);
-                pop_ptr(&run2_e_ptr_st, &run2_e_ptr);
+                pop_int(&run2_size_st, &run2_size);
+                pop_ptr(&run3_s_ptr_st, &run3_s_ptr);
+                pop_int(&run3_size_st, &run3_size);
                 pop_int(&state_st, &state);
                 pop_int(&loop_level_st, &level_next);
                 level_crr = level_next;
@@ -1029,11 +1085,13 @@ int run(char *prog, int size)
                     }
                     level_by_pass++;
                     pop_ptr(&run2_s_ptr_st, NULL);
-                    pop_ptr(&run2_e_ptr_st, NULL);
+                    pop_int(&run2_size_st, NULL);
+                    pop_ptr(&run3_s_ptr_st, NULL);
+                    pop_int(&run3_size_st, NULL);
                     pop_ptr(&sub_prog_s_ptr_st, NULL);
                     pop_int(&state_st, NULL);
                 }
-                TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
+                // TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
 
                 // level_crr = level_next;
                 // while(top_int(&brk_st) >= level_crr && size_int(&brk_st))
@@ -1055,7 +1113,7 @@ int run(char *prog, int size)
                 // }
                 if(prev_state == STATEMENT_IF
                     || prev_state == STATEMENT_ELSE
-                    || prev_state == STATEMENT_WHILE)
+                    || prev_state == STATEMENT_WHILE || prev_state == STATEMENT_FOR)
                 {
                     if(size_int(&brk_st))
                     {
@@ -1070,10 +1128,12 @@ int run(char *prog, int size)
                     {
                         level_crr--;
                     }
-                    else if(prev_state == STATEMENT_WHILE)
+                    else if(prev_state == STATEMENT_WHILE || prev_state == STATEMENT_FOR)
                     {
                         pop_ptr(&run2_s_ptr_st, &run2_s_ptr);
-                        pop_ptr(&run2_e_ptr_st, &run2_e_ptr);
+                        pop_int(&run2_size_st, &run2_size);
+                        pop_ptr(&run3_s_ptr_st, &run3_s_ptr);
+                        pop_int(&run3_size_st, &run3_size);
                         pop_ptr(&sub_prog_s_ptr_st, &sub_prog_s_ptr);
                         pop_int(&state_st, &state);
                         pop_int(&loop_level_st, &level_next);
@@ -1114,7 +1174,9 @@ int run(char *prog, int size)
                 if(size_int(&loop_level_st) && (level_next == top_int(&loop_level_st)))
                 {
                     pop_ptr(&run2_s_ptr_st, &run2_s_ptr);
-                    pop_ptr(&run2_e_ptr_st, &run2_e_ptr);
+                    pop_int(&run2_size_st, &run2_size);
+                    pop_ptr(&run3_s_ptr_st, &run3_s_ptr);
+                    pop_int(&run3_size_st, &run3_size);
                     pop_ptr(&sub_prog_s_ptr_st, &sub_prog_s_ptr);
                     pop_int(&loop_level_st, NULL);
                     pop_int(&state_st, &state);
@@ -1136,7 +1198,7 @@ int run(char *prog, int size)
                 }
                 syntax_state = STATEMENT_EXECUTION;
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
-                TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
+                // TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 if(prog_s == prog_e - 1)
                 {
                     TRACE();
@@ -1156,7 +1218,7 @@ int run(char *prog, int size)
                         {
                             prog_s++;
                         }
-                        if(statement_execution(cp_s, prog_s, NULL) != RETVAL_OK)
+                        if(statement_execution(cp_s, prog_s - cp_s, NULL) != RETVAL_OK)
                         {
                             TRACE();
                             return RETVAL_SYNTAX;
@@ -1180,13 +1242,15 @@ int run(char *prog, int size)
         }
     }
 finished:
-    if(size_int(&state_st) || size_int(&brk_st) || size_int(&loop_level_st) || size_ptr(&run2_s_ptr_st) || size_ptr(&run2_e_ptr_st) || size_ptr(&sub_prog_s_ptr_st))
+    if(size_int(&state_st) || size_int(&brk_st) || size_int(&loop_level_st) || size_ptr(&run2_s_ptr_st) || size_int(&run2_size_st) || size_ptr(&run3_s_ptr_st) || size_int(&run3_size_st) || size_ptr(&sub_prog_s_ptr_st))
     {
         TRACESTRINT("state_st", size_int(&state_st));
         TRACESTRINT("brk_st", size_int(&brk_st));
         TRACESTRINT("loop_level_st", size_int(&loop_level_st));
         TRACESTRINT("run2_s_ptr_st", size_ptr(&run2_s_ptr_st));
-        TRACESTRINT("run2_e_ptr_st", size_ptr(&run2_e_ptr_st));
+        TRACESTRINT("run2_size_st", size_int(&run2_size_st));
+        TRACESTRINT("run3_s_ptr_st", size_ptr(&run3_s_ptr_st));
+        TRACESTRINT("run3_size_st", size_int(&run3_size_st));
         TRACESTRINT("sub_prog_s_ptr_st", size_ptr(&sub_prog_s_ptr_st));
         return RETVAL_SYNTAX;
     }
@@ -1194,11 +1258,12 @@ finished:
     return RETVAL_OK;
 }
 
-int statement_execution(char infix_s[], char infix_e[], int *rs)
+int statement_execution(char * const expr, int size, int *rs)
 {
     char *symbol;
     char *sym_s;
     char *sym_e;
+    char * infix_e = expr + size;
     int ope;
     int prev_push;
     int open;
@@ -1206,16 +1271,16 @@ int statement_execution(char infix_s[], char infix_e[], int *rs)
     char *cp_s,*cp_e;
     int val, ret_val;
     int_stack_t var_st, val_st, ope_st;
-    char input[infix_e - infix_s + 1];
-    memcpy(input, infix_s, infix_e - infix_s);
-    input[infix_e - infix_s] = 0;
+    char input[size+1];
+    memcpy(input, expr, size);
+    input[size] = 0;
 
     if(g_dbg_st_exe)
     {
         TRACESTR(input);
     }
 
-    if(infix_s == infix_e)
+    if(!size)
     {
         TRACE();
         return RETVAL_SYNTAX;
@@ -1226,7 +1291,7 @@ int statement_execution(char infix_s[], char infix_e[], int *rs)
     push_int(&ope_st, OPE_DEFAULT);
     prev_push = PUSH_OPERATOR;
     open = 0;
-    sym_s = infix_s;
+    sym_s = expr;
     sym_e = infix_e;
 
     for(symbol=sym_s; symbol<sym_e;symbol++)
@@ -1259,7 +1324,7 @@ int statement_execution(char infix_s[], char infix_e[], int *rs)
                 switch(check_symbol(symbol))
                 {
                     case SYM_PRIMITIVE:
-                        if(get_primitive_val(&cp_s, cp_e, &val) != RETVAL_OK)
+                        if(get_primitive_val(&cp_s, cp_e - cp_s, &val) != RETVAL_OK)
                         {
                             TRACE();
                             return RETVAL_SYNTAX;
@@ -1294,19 +1359,18 @@ int statement_execution(char infix_s[], char infix_e[], int *rs)
                             {
                                 char *cp_tmp;
                                 called = 1;
-                                while(*cp_s++ != '(');
+                                while(*cp_s != '(')
+                                {
+                                    cp_s++;
+                                }
                                 cp_tmp = cp_s;
-                                while(*cp_s++ != ')');
-                                statement_execution(cp_tmp, cp_s - 1, &arg);
+                                walk_through_parenthesis(&cp_s, sym_e);
+                                TRACESTR(cp_s);HR;
+                                statement_execution(cp_tmp, cp_s - cp_tmp, &arg);
                                 val = (*f->func)(arg);
                                 cp_s++;
                             }
                         }
-                        if(!called)
-                        {
-
-                        }
-
                         if(!called)
                         {
                             TRACE();

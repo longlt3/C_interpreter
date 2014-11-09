@@ -202,13 +202,13 @@ int calculate_operator(int l_operant, int r_operant, int ope);
 
 int walk_through_parenthesis(char **start, char *end);
 
-int get_primitive_val(char ** sym_s, char *const sym_e, int *val);
+int get_primitive_val(char ** sym_s, int size, int *val);
 
 int is_operator(char ** symbol);
 
 int run(char *prog, int size);
 
-int statement_execution(char infix_s[], char infix_e[], int *rs);
+int statement_execution(char * const expr, int size, int *rs);
 
 int check_statement(char *statement);
 
