@@ -15,11 +15,11 @@ int main()
     // char expr[] = "1 + ()2";
 
     g_test = 0;
-    g_dbg = 1;
-    g_dbg_run = 1;
-    g_dbg_run_case = 1;
-    g_dbg_st_exe = 1;
-    g_dbg_st_exe_case = 1;
+    g_dbg = 0;
+    g_dbg_run = 0;
+    g_dbg_run_case = 0;
+    g_dbg_st_exe = 0;
+    g_dbg_st_exe_case = 0;
 
     // char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100);";
     // if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100);
@@ -61,13 +61,13 @@ int main()
     // char prog[] = "for(i=0;i<13;i=i+1) print(i);";
     // for(i=0;i<13;i=i+1) print(i);
 
-    char prog[] = "print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);";
-    print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);
+    // char prog[] = "print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);";
+    // print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);
 
     // char prog[] = "print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);";
     // print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);
 
-    // test1();
+    test1();
     // print_symbol(expr);
     // rs = statement_executino(expr, expr_e, &val);
     // print_ret_val(rs);
@@ -75,22 +75,22 @@ int main()
     // TRACEINT(1+(2));
     // TRACEINT(ope_st.top);
 
-    TRACESTR(prog);
-    g_test = 1;
-    rs = run(prog, sizeof(prog));
-    TRACESTR(g_dbg_str[DBG_RET_VAL][rs]);
+    // TRACESTR(prog);
+    // g_test = 1;
+    // rs = run(prog, sizeof(prog));
+    // TRACESTR(g_dbg_str[DBG_RET_VAL][rs]);
 
-    HR;printf("Output:\n%s\n", g_test_1);
-    HR;printf("Expected:\n%s\n", g_test_2);
-    rs = strcmp(g_test_1, g_test_2);
-    if(rs)
-    {
-        HR;printf("__FAILED!\n");HR;
-    }
-    else
-    {
-        HR;printf("Passed!\n");HR;
-    }
+    // HR;printf("Output:\n%s\n", g_test_1);
+    // HR;printf("Expected:\n%s\n", g_test_2);
+    // rs = strcmp(g_test_1, g_test_2);
+    // if(rs)
+    // {
+    //     HR;printf("__FAILED!\n");HR;
+    // }
+    // else
+    // {
+    //     HR;printf("Passed!\n");HR;
+    // }
     return 0;
 }
 

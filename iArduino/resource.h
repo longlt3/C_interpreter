@@ -5,9 +5,9 @@
 #include <string.h>
 
 #define TEST
-#define DEBUG
+// #define DEBUG
 
-#define DBG_STR_MAX         2048
+#define DBG_STR_MAX         0x2000
 #define MAX 20
 
 extern void test1();
@@ -26,6 +26,8 @@ extern int g_test;
 extern char * g_dbg_str[DBG_MAX][DBG_STR_MAX];
 extern char g_test_1[];
 extern char g_test_2[];
+extern int g_test_size_1;
+extern int g_test_size_2;
 extern int g_dbg;
 extern int g_dbg_st_exe;
 extern int g_dbg_st_exe_case;

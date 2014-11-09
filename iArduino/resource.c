@@ -94,7 +94,7 @@ int print(int val)
         g_test_size_2 += sprintf(g_test_2 + g_test_size_2, "%d ", val);
     }
 #endif;
-    if(g_test)
+    if(g_dbg)
     {
         printf("%d\n", val);
     }
@@ -747,7 +747,7 @@ int run(char *prog, int size)
     memset(&run2_size_st, 0, sizeof(int_stack_t));
 
     memset(&run3_s_ptr_st, 0, sizeof(ptr_stack_t));
-    memset(&run3_e_ptr_st, 0, sizeof(ptr_stack_t));
+    memset(&run3_size_st, 0, sizeof(int_stack_t));
 
     memset(&sub_prog_s_ptr_st, 0, sizeof(ptr_stack_t));
 
@@ -886,11 +886,6 @@ int run(char *prog, int size)
                                 run3_size = prog_s - cp_s - 1;
                                 sub_prog_s_ptr = prog_s;
                                 run_step = RUN_STEP_1ST;
-                                TRACESTR(run1_s_ptr+run1_size);HR;
-                                TRACESTR(run2_s_ptr+run2_size);HR;
-                                TRACESTR(run3_s_ptr+run3_size);HR;
-                                // return 0;
-                                TRACESTR(prog_s);
                             }
                             else
                             {
@@ -1252,6 +1247,12 @@ finished:
         TRACESTRINT("run3_s_ptr_st", size_ptr(&run3_s_ptr_st));
         TRACESTRINT("run3_size_st", size_int(&run3_size_st));
         TRACESTRINT("sub_prog_s_ptr_st", size_ptr(&sub_prog_s_ptr_st));
+        printf("%d\n", size_int(&state_st));
+        printf("%d\n", size_int(&brk_st));
+        printf("%d\n", size_int(&loop_level_st));
+        printf("%d\n", size_int(&run2_size_st));
+        printf("%d\n", size_int(&run3_size_st));
+        printf("%d\n", size_ptr(&sub_prog_s_ptr_st));
         return RETVAL_SYNTAX;
     }
 
@@ -1365,7 +1366,6 @@ int statement_execution(char * const expr, int size, int *rs)
                                 }
                                 cp_tmp = cp_s;
                                 walk_through_parenthesis(&cp_s, sym_e);
-                                TRACESTR(cp_s);HR;
                                 statement_execution(cp_tmp, cp_s - cp_tmp, &arg);
                                 val = (*f->func)(arg);
                                 cp_s++;
