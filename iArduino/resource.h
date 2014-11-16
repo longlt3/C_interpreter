@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define TEST
-// #define DEBUG
+#define DEBUG
 
 #define DBG_STR_MAX         0x2000
 #define MAX 20
@@ -177,6 +177,8 @@ struct Function3 {
      int   len;
      int (*func)(int, int, int);
 };
+
+void getsS(char *buf, size_t len);
 
 int is_white_space(char ch);
 

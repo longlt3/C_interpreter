@@ -5,6 +5,70 @@
 
 #include "resource.h"
 
+#define BUFFER_SIZE             0x800
+
+void setup()
+{
+    char in_buf[BUFFER_SIZE+1];
+    char prog_buf[BUFFER_SIZE+1];
+    int result = 0;
+    int prog_buf_size;
+    char *des;
+    memset(in_buf, 0, sizeof(in_buf));
+    memset(prog_buf, 0, sizeof(prog_buf));
+    getsS(in_buf, BUFFER_SIZE);
+    des = in_buf;
+    while(is_white_space(*des) && des != 0)
+    {
+        des++;
+    }
+    if(des == 0 || *des == 0)
+    {
+
+    }
+    else if (strncmp(des, "prog", 4) == 0)
+    {
+        des = prog_buf;
+        while((des - prog_buf) < BUFFER_SIZE)
+        {
+            getsS(in_buf, BUFFER_SIZE);
+            if(strncmp(in_buf, "end", 3) == 0)
+            {
+                break;
+            }
+            strcpy(des, in_buf);
+            des = prog_buf + strlen(prog_buf);
+            if((des - prog_buf) > BUFFER_SIZE)
+            {
+                printf("program is too large.\n");
+                return;
+            }
+        }
+        printf("Output:\n");
+        result = run(prog_buf, strlen(prog_buf));
+    }
+    else
+    {
+        if(*des == '\0')
+        {
+            printf("des: %s",des);
+            printf("%d", '\0');
+        }
+        result = statement_execution(des, strlen(des), NULL);
+        // printf("\nUnrecognized!\n\n");
+    }
+
+    if(result == RETVAL_OK)
+    {
+        printf("\nSuccessful!\n\n");
+    }
+    else
+    {
+        printf("\nError!\n\n");
+    }
+    // printf("%s.\n",g_dbg_str[DBG_RET_VAL][result]);
+}
+
 int main()
 {
     // char expr[] = "1 + print  (  print   (10) )";
@@ -13,7 +77,8 @@ int main()
     int i=0, j=0;
     // char *expr_e = expr + sizeof(expr);
     // char expr[] = "1 + ()2";
-
+    HR;printf("Tiny C language interpreter\n");HR;
+    g_test_size_1 = g_test_size_2 = 0;
     g_test = 0;
     g_dbg = 0;
     g_dbg_run = 0;
@@ -52,7 +117,7 @@ int main()
     // print(i); while((i=i+1)<30) { while((j=j+1)<3) { if(j<2) { print(j); continue; } print(i); } } print(100);
 
     // char prog[] = "while((i=i+1)<10000) { j=10; while((j=j-1)>1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);";
-    // while((i=i+1)<10000) { j=10; while((j=j-1)>1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);
+    // while((i=i+1)<10000) { j=10; while((j=j-1)>1) { while((i=i+1)<10000) { if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); print(9999); } } } print(100);
 
 
     // char prog[] = "while((i=i+1)<30) { if(i>10) { print(0xFF); break; }  print(i); } print(i);";
@@ -64,10 +129,17 @@ int main()
     // char prog[] = "print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);";
     // print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);
 
-    // char prog[] = "print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);";
-    // print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);
+    // char prog[] = "i=10, print(i);";
+    // i=10, print(i);
 
-    test1();
+    // char prog[] = "for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);";
+    // for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);
+
+    test_expr();
+    test_if_else();
+    test_while();
+    test_for();
+
     // print_symbol(expr);
     // rs = statement_executino(expr, expr_e, &val);
     // print_ret_val(rs);
@@ -90,6 +162,12 @@ int main()
     // else
     // {
     //     HR;printf("Passed!\n");HR;
+    // }
+
+
+    // while(1)
+    // {
+    //     setup();
     // }
     return 0;
 }
