@@ -12,6 +12,12 @@ char g_test_1[TEST_STR_MAX];
 int g_test_size_1 = 0;
 char g_test_2[TEST_STR_MAX];
 int g_test_size_2 = 0;
+int g_test_failed = 0;
+int g_test_total_case = 0;
+
+static char prog[2048];
+static int rs=0, size=0;
+static int i,j;
 
 void test_statement_execution_error_syntax(char *ch, int size)
 {
@@ -31,10 +37,6 @@ void test_statement_execution_ok(char *ch, int size, int val)
     TEST(value, val);
 }
 
-static char prog[2048];
-static int rs=0, size=0;
-static int i,j;
-
 void test_expr()
 {
     HR;printf("Testing expression.\n");HR;
@@ -43,6 +45,7 @@ void test_expr()
     memcpy(prog, "print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     print(((1 + 2) * 3 + 4 * (5 + 6)) * 7);
     g_test = 1;
@@ -55,11 +58,12 @@ void test_expr()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -77,6 +81,7 @@ void test_if_else()
     memcpy(prog, "if(1)if(0)if(1)print(1);else print(2);else print(3);else if(1)print(4);else print(5);print(10);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     if(1)if(0)if(1)print(1);else print(2);else print(3);else if(1)print(4);else print(5);print(10);
     g_test = 1;
@@ -89,11 +94,12 @@ void test_if_else()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -106,6 +112,7 @@ void test_if_else()
     memcpy(prog, "print(100); if(1) if(1) print(1); else { if(0) {print(3);} else {print(4);print(5);} print(200); } print(300);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     print(100); if(1) if(1) print(1); else { if(0) {print(3);} else {print(4);print(5);} print(200); } print(300);
     g_test = 1;
@@ -117,11 +124,12 @@ void test_if_else()
     else
     {
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -139,6 +147,7 @@ void test_while()
     memcpy(prog, "print(i); while((i=i+1)<10) { j=0; while((j=j+1)<30) { if(i>1) { print(i);} } } print(100);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     print(i); while((i=i+1)<10) { j=0; while((j=j+1)<30) { if(i>1) { print(i);} } } print(100);
     g_test = 1;
@@ -151,11 +160,12 @@ void test_while()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -168,6 +178,7 @@ void test_while()
     memcpy(prog, "while((i=i+1)<30) { j=10; while((j=j-1)>1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     while((i=i+1)<30) { j=10; while((j=j-1)>1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);
     g_test = 1;
@@ -180,11 +191,12 @@ void test_while()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -197,6 +209,7 @@ void test_while()
     memcpy(prog, "while((i=i+1)<30) { if(i>10) { print(0xFF); break; } print(i); } print(i);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     while((i=i+1)<30) { if(i>10) { print(0xFF); break; } print(i); } print(i);
     g_test = 1;
@@ -209,11 +222,12 @@ void test_while()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -231,6 +245,7 @@ void test_for()
     memcpy(prog, "print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     print(i); for(i=0;i<30;i=i+1) { for(j=0;j<13;j=j+1) { if(j>10) { print(j); break; } print(i); } } print(100);
     g_test = 1;
@@ -243,11 +258,12 @@ void test_for()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -260,6 +276,7 @@ void test_for()
     memcpy(prog, "for(i=0;i<20;i=i+1) { for(j=0;j<20;j=j+1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     for(i=0;i<20;i=i+1) { for(j=0;j<20;j=j+1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);
     g_test = 1;
@@ -272,11 +289,12 @@ void test_for()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -289,6 +307,7 @@ void test_for()
     memcpy(prog, "for(i=0;i<10;i=i+1) { if(i%2) continue; else print(i); }", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
     for(i=0;i<10;i=i+1) { if(i%2) continue; else print(i); }
     g_test = 1;
@@ -301,11 +320,12 @@ void test_for()
     {
 
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {
@@ -313,13 +333,14 @@ void test_for()
         }
     }
 
-    printf("for(i=0;i<2;i=i+1){ if(i%%2)if(i%%3)if(i%%5) print(i);else print(i+100);else print(i+1000);else if(i%%7)print(i+200);else print(i+2000); } print(9999);\n\n");
-    size = sizeof("for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);");
-    memcpy(prog, "for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);", size);
+    printf("for(i=0;i<100;i=i+1) for(j=0;j<20;j=j+1) { if(i%%2)if(i%%3)if(i%%5) print(i);else print(i+100);else print(i+1000);else if(i%%7)print(i+200);else print(i+2000); } print(9999);\n\n");
+    size = sizeof("for(i=0;i<100;i=i+1) for(j=0;j<20;j=j+1) { if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);");
+    memcpy(prog, "for(i=0;i<100;i=i+1) for(j=0;j<20;j=j+1) { if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);", size);
     g_test = 0;
     i=0,j=0;
+    g_test_total_case++;
     g_test_size_1 = g_test_size_2 = 0;
-    for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);
+    for(i=0;i<100;i=i+1) for(j=0;j<20;j=j+1) { if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);
     g_test = 1;
     rs = run(prog, size);
     if(rs != RETVAL_OK)
@@ -329,11 +350,42 @@ void test_for()
     else
     {
         rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
         if(rs)
         {
-            printf("Output: %s\n", g_test_1);
             printf("Expected: %s\n", g_test_2);
             printf("__FAILED!\n");HR;
+            g_test_failed++;
+        }
+        else
+        {
+            printf("Passed!\n");HR;
+        }
+    }
+
+    printf("for(i=0;i<50;i=i+1){ if((i+j)%%2)if((i+j)%%3)if((i+j)%%5) continue; else print(i+100);else print(i+1000);else if((i+j)%%7)print(i+200);else print(i+2000); } print(9999);\n\n");
+    size = sizeof("for(i=0;i<50;i=i+1){ if((i+j)%2)if((i+j)%3)if((i+j)%5) continue; else print(i+100);else print(i+1000);else if((i+j)%7)print(i+200);else print(i+2000); } print(9999);");
+    memcpy(prog, "for(i=0;i<50;i=i+1){ if((i+j)%2)if((i+j)%3)if((i+j)%5) continue; else print(i+100);else print(i+1000);else if((i+j)%7)print(i+200);else print(i+2000); } print(9999);", size);
+    g_test = 0;
+    i=0,j=0;
+    g_test_total_case++;
+    g_test_size_1 = g_test_size_2 = 0;
+    for(i=0;i<50;i=i+1){ if((i+j)%2)if((i+j)%3)if((i+j)%5) continue; else print(i+100);else print(i+1000);else if((i+j)%7)print(i+200);else print(i+2000); } print(9999);
+    g_test = 1;
+    rs = run(prog, size);
+    if(rs != RETVAL_OK)
+    {
+        printf("__FAILED!\n");HR;
+    }
+    else
+    {
+        rs = strcmp(g_test_1, g_test_2);
+        printf("Output: %s\n", g_test_1);
+        if(rs)
+        {
+            printf("Expected: %s\n", g_test_2);
+            printf("__FAILED!\n");HR;
+            g_test_failed++;
         }
         else
         {

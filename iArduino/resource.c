@@ -3,6 +3,8 @@
 #include "debug.h"
 #include "test.h"
 
+int g_prog_run = 0;
+
 int print(int val)
 {
 #ifdef TEST
@@ -15,8 +17,9 @@ int print(int val)
         g_test_size_2 += sprintf(g_test_2 + g_test_size_2, "%d ", val);
     }
 #endif;
-    if(g_dbg)
+    if (g_prog_run)
     {
+        /* code */
         printf("%d\n", val);
     }
     return val;
@@ -790,12 +793,10 @@ int run(char *prog, int size)
                             }
                             if(!val)
                             {
-                                condition = CONDITION_FALSE;
                                 level_by_pass = level_next;
                             }
                             else
                             {
-                                condition = CONDITION_TRUE;
                                 level_by_pass = MAX;
                                 push_int(&state_st, state);
                                 push_int(&loop_level_st, level_crr);
@@ -815,7 +816,6 @@ int run(char *prog, int size)
                         sub_prog_s_ptr = 0;
                         run_step = RUN_STEP_INIT;
                         state = STATEMENT_INIT;
-                        TRACESTR(g_dbg_str[DBG_CONDITION][condition]);
                     break;
 
                     case RUN_STEP_3RD:
@@ -1017,6 +1017,7 @@ int run(char *prog, int size)
                         prog_s = sub_prog_s_ptr ? (sub_prog_s_ptr - 1) : prog_s;
                     }
                 }
+
                 TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 prev_state = STATEMENT_SEMICOLON;
                 prog_s++;
@@ -1032,6 +1033,11 @@ int run(char *prog, int size)
             case STATEMENT_OPEN_BRK:
                 syntax_state = STATEMENT_OPEN_BRK;
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+                if(prev_state == STATEMENT_SEMICOLON || prev_state == STATEMENT_CLOSE_BRK)
+                {
+                    TRACE();
+                    return RETVAL_NOT_SUPPORTED;
+                }
                 prev_state = STATEMENT_OPEN_BRK;
                 state = STATEMENT_INIT;
                 push_int(&brk_st, level_crr);

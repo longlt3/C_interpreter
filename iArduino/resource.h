@@ -139,6 +139,8 @@ struct Function3 {
      int (*func)(int, int, int);
 };
 
+extern int g_prog_run;
+
 void getsS(char *buf, size_t len);
 
 int is_white_space(char ch);

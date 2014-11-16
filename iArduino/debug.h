@@ -15,12 +15,6 @@ enum DBG_STR
     DBG_MAX,
 };
 
-extern int g_test;
-extern char g_test_1[];
-extern char g_test_2[];
-extern int g_test_size_1;
-extern int g_test_size_2;
-
 extern char * g_dbg_str[DBG_MAX][DBG_STR_MAX];
 extern int g_dbg;
 extern int g_dbg_st_exe;
