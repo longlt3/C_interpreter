@@ -4,6 +4,8 @@
 #include <string.h>
 
 #include "resource.h"
+#include "debug.h"
+#include "test.h"
 
 #define BUFFER_SIZE             0x800
 

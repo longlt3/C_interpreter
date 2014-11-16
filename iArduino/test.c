@@ -1,4 +1,4 @@
-#include "resource.h"
+#include "test.h"
 
 // #define TEST1(arg)          if(arg==RETVAL_OK) printf("PASSED\n"); else printf("FAILED\n");
 #define TEST(arg1, arg2)   if(arg1==arg2) printf("Passed\n"); else printf("FAILED\n");
@@ -6,6 +6,12 @@
 #define ASSERT_RETURN(retval)   if(retval!=RETVAL_OK) { printf("FAILED\n"); return; }
 
 // extern int statement_execution(char infix_s[], char infix_e[], int *rs);
+
+int g_test;
+char g_test_1[TEST_STR_MAX];
+int g_test_size_1 = 0;
+char g_test_2[TEST_STR_MAX];
+int g_test_size_2 = 0;
 
 void test_statement_execution_error_syntax(char *ch, int size)
 {
@@ -137,7 +143,6 @@ void test_while()
     print(i); while((i=i+1)<10) { j=0; while((j=j+1)<30) { if(i>1) { print(i);} } } print(100);
     g_test = 1;
     rs = run(prog, size);
-    TRACEINT(g_test_size_1);TRACEINT(g_test_size_2);
     if(rs != RETVAL_OK)
     {
         printf("__FAILED!\n");HR;
@@ -167,7 +172,6 @@ void test_while()
     while((i=i+1)<30) { j=10; while((j=j-1)>1) { if(j-i>5) { continue; } else { print(i+j); print(j); print(i); } } } print(100);
     g_test = 1;
     rs = run(prog, size);
-    TRACEINT(g_test_size_1);TRACEINT(g_test_size_2);
     if(rs != RETVAL_OK)
     {
         printf("__FAILED!\n");HR;
