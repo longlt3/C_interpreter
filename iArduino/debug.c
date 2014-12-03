@@ -1,12 +1,12 @@
 #include "debug.h"
-
+#ifdef TCI_DEBUG
 int g_dbg;
 int g_dbg_st_exe;
 int g_dbg_st_exe_case;
 int g_dbg_run;
 int g_dbg_run_case;
 
-#ifdef DEBUG
+
 char * g_dbg_str[DBG_MAX][DBG_STR_MAX] =
 {
     {
@@ -71,6 +71,6 @@ char * g_dbg_str[DBG_MAX][DBG_STR_MAX] =
         "CONDITION_FALSE",
     },
 };
-#else
-char * g_dbg_str[DBG_MAX][DBG_STR_MAX] = {0};
+// #else
+// char * g_dbg_str[DBG_MAX][DBG_STR_MAX] = {0};
 #endif

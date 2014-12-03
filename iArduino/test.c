@@ -1,5 +1,6 @@
 #include "test.h"
 
+#ifdef TCI_TEST
 // #define TEST1(arg)          if(arg==RETVAL_OK) printf("PASSED\n"); else printf("FAILED\n");
 #define TEST(arg1, arg2)   if(arg1==arg2) printf("Passed\n"); else printf("FAILED\n");
 
@@ -14,7 +15,6 @@ char g_test_2[TEST_STR_MAX];
 int g_test_size_2 = 0;
 int g_test_failed = 0;
 int g_test_total_case = 0;
-
 static char prog[2048];
 static int rs=0, size=0;
 static int i,j;
@@ -394,3 +394,4 @@ void test_for()
     }
 
 }
+#endif

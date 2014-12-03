@@ -3,9 +3,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "definition.h"
 
-#define TEST
-#define DEBUG
+// #define TCI_TEST
+// #define TCI_DEBUG
 
 #define MAX 20
 
@@ -24,8 +25,6 @@ enum RETVAL
 enum RUN_STEP
 {
     RUN_STEP_INIT,
-    RUN_STEP_RUN,
-    RUN_STEP_NOT_RUN,
     RUN_STEP_IF,
     RUN_STEP_1ST,
     RUN_STEP_2ND,

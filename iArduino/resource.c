@@ -7,7 +7,7 @@ int g_prog_run = 0;
 
 int print(int val)
 {
-#ifdef TEST
+#ifdef TCI_TEST
     if(g_test)
     {
         g_test_size_1 += sprintf(g_test_1 + g_test_size_1, "%d ", val);
@@ -64,8 +64,25 @@ void print_stack_ptr(ptr_stack_t *st)
 
 void getsS(char *buf, size_t len)
 {
-     fgets(buf, len, stdin);
-     buf[len+1] = 0;
+    *buf = 0;
+    int size = 0;
+#ifdef getchar
+    while(size < len)
+    {
+        buf[size] = getchar();
+        if(buf[size++] == '\n')
+        {
+            buf[size] = 0;
+            break;
+        }
+    }
+#else
+
+    while(size < len && *(buf+size-1) != '\n')
+    {
+
+    }
+#endif
 }
 
 int is_white_space(char ch)
@@ -646,7 +663,7 @@ int run(char *prog, int size)
     int run1_size, run2_size, run3_size;
     int_stack_t run1_size_st, run2_size_st, run3_size_st;
 
-    memset(&variables, 0, sizeof(variables));
+    tci_memset(&variables, 0, sizeof(variables));
 
     state = STATEMENT_INIT;
     prev_state = state;
@@ -666,21 +683,21 @@ int run(char *prog, int size)
     level_next = 0;
     level_crr = 0;
     level_by_pass = MAX;
-    memset(&cond_st, 0, sizeof(int_stack_t));
-    memset(&brk_st, 0, sizeof(int_stack_t));
-    memset(&state_st, 0, sizeof(int_stack_t));
-    memset(&loop_level_st, 0, sizeof(int_stack_t));
+    tci_memset(&cond_st, 0, sizeof(int_stack_t));
+    tci_memset(&brk_st, 0, sizeof(int_stack_t));
+    tci_memset(&state_st, 0, sizeof(int_stack_t));
+    tci_memset(&loop_level_st, 0, sizeof(int_stack_t));
 
-    memset(&run1_s_ptr_st, 0, sizeof(ptr_stack_t));
-    memset(&run1_e_ptr_st, 0, sizeof(ptr_stack_t));
+    tci_memset(&run1_s_ptr_st, 0, sizeof(ptr_stack_t));
+    tci_memset(&run1_e_ptr_st, 0, sizeof(ptr_stack_t));
 
-    memset(&run2_s_ptr_st, 0, sizeof(ptr_stack_t));
-    memset(&run2_size_st, 0, sizeof(int_stack_t));
+    tci_memset(&run2_s_ptr_st, 0, sizeof(ptr_stack_t));
+    tci_memset(&run2_size_st, 0, sizeof(int_stack_t));
 
-    memset(&run3_s_ptr_st, 0, sizeof(ptr_stack_t));
-    memset(&run3_size_st, 0, sizeof(int_stack_t));
+    tci_memset(&run3_s_ptr_st, 0, sizeof(ptr_stack_t));
+    tci_memset(&run3_size_st, 0, sizeof(int_stack_t));
 
-    memset(&sub_prog_s_ptr_st, 0, sizeof(ptr_stack_t));
+    tci_memset(&sub_prog_s_ptr_st, 0, sizeof(ptr_stack_t));
 
     for(; prog_s < prog_e;)
     {
@@ -689,12 +706,12 @@ int run(char *prog, int size)
             prog_s++;
             continue;
         }
-
+#ifdef TCI_DEBUG
         if(g_dbg_run)
         {
             TRACESTR(prog_s);
         }
-
+#endif
         if(state == STATEMENT_INIT)
         {
             state = check_statement(prog_s);
@@ -705,7 +722,9 @@ int run(char *prog, int size)
             case STATEMENT_FOR:
             case STATEMENT_WHILE:
                 syntax_state = state;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 switch(run_step)
                 {
                     case RUN_STEP_INIT:
@@ -832,7 +851,9 @@ int run(char *prog, int size)
 
             case STATEMENT_IF:
                 syntax_state = STATEMENT_IF;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 if (size_int(&brk_st))
                 {
                     level_crr = level_next;
@@ -868,8 +889,10 @@ int run(char *prog, int size)
                         level_by_pass = MAX;
                     }
                 }
+#ifdef TCI_DEBUG
                 TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 TRACESTR(g_dbg_str[DBG_CONDITION][condition]);
+#endif
                 prev_state = STATEMENT_IF;
                 state = STATEMENT_INIT;
             break;
@@ -877,7 +900,9 @@ int run(char *prog, int size)
             case STATEMENT_ELSE: ;
                 int level_tmp = level_next;
                 syntax_state = STATEMENT_ELSE;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 if(condition == CONDITION_INIT)
                 {
                     TRACE();
@@ -917,7 +942,9 @@ int run(char *prog, int size)
 
             case STATEMENT_CONTINUE:
                 syntax_state = STATEMENT_CONTINUE;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 if(level_by_pass <= level_next)
                 {
                     prog_s = prog_s + sizeof("continue") - 1;
@@ -951,7 +978,9 @@ int run(char *prog, int size)
 
             case STATEMENT_BREAK:
                 syntax_state = STATEMENT_BREAK;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 level_crr = level_next;
                 if(level_by_pass > level_next)
                 {
@@ -982,7 +1011,9 @@ int run(char *prog, int size)
             case STATEMENT_SEMICOLON:
                 state = STATEMENT_INIT;
                 syntax_state = STATEMENT_SEMICOLON;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 // if(syntax_state != STATEMENT_EXECUTION && syntax_state != STATEMENT_COMMA)
                 // {
                 //     TRACE();
@@ -1025,14 +1056,18 @@ int run(char *prog, int size)
 
             case STATEMENT_COMMA:
                 syntax_state = STATEMENT_COMMA;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 state = STATEMENT_INIT;
                 prog_s++;
             break;
 
             case STATEMENT_OPEN_BRK:
                 syntax_state = STATEMENT_OPEN_BRK;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 if(prev_state == STATEMENT_SEMICOLON || prev_state == STATEMENT_CLOSE_BRK)
                 {
                     TRACE();
@@ -1046,7 +1081,9 @@ int run(char *prog, int size)
 
             case STATEMENT_CLOSE_BRK:
                 syntax_state = STATEMENT_CLOSE_BRK;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 if(pop_int(&brk_st, &level_next) != RETVAL_OK)
                 {
                     TRACE();
@@ -1081,7 +1118,9 @@ int run(char *prog, int size)
                     break;
                 }
                 syntax_state = STATEMENT_EXECUTION;
+#ifdef TCI_DEBUG
                 if(g_dbg_run_case) TRACESTR(g_dbg_str[DBG_STATEMENT][syntax_state]);
+#endif
                 // TRACESTRINT("level_crr",level_crr); TRACESTRINT("level_next",level_next); TRACESTRINT("level_by_pass",level_by_pass);
                 if(prog_s == prog_e - 1)
                 {
@@ -1162,22 +1201,24 @@ int statement_execution(char * const expr, int size, int *rs)
     int val, ret_val;
     int_stack_t var_st, val_st, ope_st;
     char input[size+1];
-    memcpy(input, expr, size);
+    tci_memcpy(input, expr, size);
     input[size] = 0;
 
+#ifdef TCI_DEBUG
     if(g_dbg_st_exe)
     {
         TRACESTR(input);
     }
+#endif
 
     if(!size)
     {
         TRACE();
         return RETVAL_SYNTAX;
     }
-    memset(&ope_st, 0, sizeof(int_stack_t));
-    memset(&val_st, 0, sizeof(int_stack_t));
-    memset(&var_st, 0, sizeof(int_stack_t));
+    tci_memset(&ope_st, 0, sizeof(int_stack_t));
+    tci_memset(&val_st, 0, sizeof(int_stack_t));
+    tci_memset(&var_st, 0, sizeof(int_stack_t));
     push_int(&ope_st, OPE_DEFAULT);
     prev_push = PUSH_OPERATOR;
     open = 0;
@@ -1192,12 +1233,15 @@ int statement_execution(char * const expr, int size, int *rs)
         }
 
         ope = is_operator(&symbol);
+
+#ifdef TCI_DEBUG
         if(g_dbg && g_dbg_st_exe_case)
         {
-            memcpy(input, symbol, sym_e - symbol);
+            tci_memcpy(input, symbol, sym_e - symbol);
             input[sym_e - symbol] = 0;
             TRACESTR(input);
         }
+#endif
 
         switch(ope)
         {

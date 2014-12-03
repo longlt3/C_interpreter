@@ -19,11 +19,13 @@ void setup()
     memset(in_buf, 0, sizeof(in_buf));
     memset(prog_buf, 0, sizeof(prog_buf));
     getsS(in_buf, BUFFER_SIZE);
+    TRACE();
     des = in_buf;
     while(is_white_space(*des) && des != 0)
     {
         des++;
     }
+
     if(des == 0 || *des == 0)
     {
 
@@ -53,6 +55,7 @@ void setup()
     }
     else
     {
+        TRACESTR(des);
         if(*des == '\0')
         {
             printf("des: %s",des);
@@ -85,14 +88,18 @@ int main()
     int i=0, j=0;
     // char *expr_e = expr + sizeof(expr);
     // char expr[] = "1 + ()2";
+#ifdef TCI_TEST
     g_test_size_1 = g_test_size_2 = 0;
     g_test = 0;
+#endif
+
+#ifdef TCI_DEBUG
     g_dbg = 1;
-    g_dbg_run = 1;
-    g_dbg_run_case = 1;
+    g_dbg_run = 0;
+    g_dbg_run_case = 0;
     g_dbg_st_exe = 0;
     g_dbg_st_exe_case = 0;
-
+#endif
     // char prog[] = "if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100);";
     // if(0) if(0) print(1); else print(2); else if(1) print(3); else print(4); print(100);
 
@@ -141,13 +148,13 @@ int main()
 
     // char prog[] = "for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);";
     // for(i=0;i<2;i=i+1){ if(i%2)if(i%3)if(i%5) print(i);else print(i+100);else print(i+1000);else if(i%7)print(i+200);else print(i+2000); } print(9999);
-
+#ifdef TCI_TEST
     // test_expr();
     // test_if_else();
     // test_while();
     // test_for();
     // printf("Failed: %d on %d Test case.\n", g_test_failed, g_test_total_case);
-
+#endif
     // print_symbol(expr);
     // rs = statement_executino(expr, expr_e, &val);
     // print_ret_val(rs);
@@ -171,7 +178,6 @@ int main()
     // {
     //     HR;printf("Passed!\n");HR;
     // }
-
     g_prog_run = 1;
     HR;printf("Tiny C language interpreter\n");HR;
     while(1)

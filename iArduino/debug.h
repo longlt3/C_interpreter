@@ -3,6 +3,8 @@
 
 #include "resource.h"
 
+#ifdef TCI_DEBUG
+
 #define DBG_STR_MAX         0x2000
 
 enum DBG_STR
@@ -22,8 +24,6 @@ extern int g_dbg_st_exe_case;
 extern int g_dbg_run;
 extern int g_dbg_run_case;
 
-#ifdef DEBUG
-
 #define TRACE(x)              if(g_dbg) printf("\n%s : %d\r\n",__FUNCTION__,__LINE__)
 #define TRACEINT(x)           if(g_dbg) printf("\n%s : %d : %d\r\n",__FUNCTION__,__LINE__,x)
 #define TRACESTR(x)           if(g_dbg) printf("\n%s : %d : %s\r\n",__FUNCTION__,__LINE__,x)
@@ -41,6 +41,5 @@ extern int g_dbg_run_case;
 #define ASSERT(expr)
 
 #endif
-
 
 #endif
