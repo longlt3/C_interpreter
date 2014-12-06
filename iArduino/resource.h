@@ -22,7 +22,7 @@ enum RETVAL
     RETVAL_NOT_SUPPORTED,
 };
 
-enum RUN_STEP
+enum RUN_STEPN
 {
     RUN_STEP_INIT,
     RUN_STEP_IF,
